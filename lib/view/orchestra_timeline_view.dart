@@ -134,6 +134,7 @@ class MessageNodeExecutor {
 
 class OrchestraTimeline extends StatefulWidget {
   var running = false;
+  var zoomFactor = .2;
   var restart = false;
   VoidCallback? play;
   VoidCallback? onFinishPlay;
@@ -142,7 +143,22 @@ class OrchestraTimeline extends StatefulWidget {
     ParentNode(
       title: "Test",
       messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 2),)
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.red), delay: Duration(seconds: 2),),
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.green), delay: Duration(seconds: 2),),
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.blue), delay: Duration(seconds: 4),),
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purple), delay: Duration(seconds: 3),),
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 1),),
+        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.yellow), delay: Duration(seconds: 10),),
+        MessageNode(lamps: {}, message: AnimationMessage(
+          [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+          AnimationSettingsConfig(
+          InterpolationType.linear,
+          TimeFactor.repeat,
+          0,
+          1,
+          0,
+        )
+        ), delay: Duration(seconds: 1),)
       ],
     ),
     ParentNode(
@@ -236,201 +252,42 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
 
   @override
   Widget build(BuildContext context) {
-    return Timeline.tileBuilder(
-      theme: TimelineThemeData(
-        nodePosition: 0,
-        color: Color(0xff989898),
-        indicatorTheme: IndicatorThemeData(
-          position: 0,
-          size: 20.0,
-        ),
-      ),
-      builder: TimelineTileBuilder.connected(
-        connectionDirection: ConnectionDirection.before,
-        itemCount: widget.nodes.length + 1,
-        contentsBuilder: (_, index) {
-          return Padding(
-            padding: EdgeInsets.only(left: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if(widget.nodes.length == 0)... [
-                    Text("Keine Knotenpunkte")
-                ]
-                else if(widget.nodes.length <= index) ...[
-                  Text("Ende", style: Theme.of(context).textTheme.headline5),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: ChoiceChip(
-                      avatar:
-                        Icon(Icons.repeat, color: widget.restart?Theme.of(context).colorScheme.secondary:null),
-                      label: Text(widget.restart?"Wiederholung aktiviert":"Wiederholung deaktiviert"),
-                      selected: widget.restart,
-                      onSelected: (s) => {
-                        setState(() {
-                          widget.restart = s;
-                        })
-                      },
-                    ),
-                  )
-                ] else ...[
-                  LongPressDraggable<DragData>(
-                    data: DragData(parentId: index, index: -1, dragType: DragType.GROUP),
-                    feedback: Card(
-                        elevation: 8,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              Text(widget.nodes[index].title ?? "Sequenz ${index + 1}", style: Theme.of(context).textTheme.titleSmall),
-                              Row(
-                                children: [
-                                  Text("${widget.nodes[index].messages.length} x "),
-                                  Icon(getDraggingIcon(widget.nodes[index].messages.length), size: 32),
-                                ],
-                              )
-                            ],
-                          ),
-                        )
-                    ),
-                    child: DragTarget<DragData>(
-                      onWillAccept: (DragData? d) {
-                        // Only accepts if there is no data
-                        if(d == null) {
-                          return false;
-                        }
-                        if(widget.nodes[index].messages.isNotEmpty && d.dragType != DragType.GROUP) {
-                          return false;
-                        }
-                        if(d.parentId == index) {
-                          return false;
-                        }
-                        setState(() {
-                          expandedTitle = index;
-                          dragType = d.dragType;
-                        });
-                        return true;
-                      },
-                      onLeave: (DragData? d) {
-                        setState(() {
-                          expandedTitle = -1;
-                        });
-                      },
-                      onAccept: (DragData d) {
-                        if(d.dragType == DragType.NODE) {
-                          setState(() {
-                            expandedTitle = -1;
-                            EventNode node = widget.nodes[d.parentId].messages.removeAt(d.index);
-                            widget.nodes[index].messages.add(node);
-                          });
-                        } else {
-                          setState(() {
-                            expandedTitle = -1;
-                            ParentNode p = widget.nodes.removeAt(d.parentId);
-                            widget.nodes.insert(index, p);
-                          });
+    return Column(
+      children: [
+        Container(
+          height: 500,
+          child: Timeline.tileBuilder(
+            scrollDirection: Axis.horizontal,
+            builder: TimelineTileBuilder.connected(
+              connectionDirection: ConnectionDirection.before,
+              itemCount: widget.nodes[0].messages.length,
+              contentsBuilder: (_, index) {
+                var message = widget.nodes[0].messages[index];
+                return Padding(
+                  padding: const EdgeInsets.all(2.0),
+                  child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.0),
+                        color: message.cardIndicator == CardIndicator.COLOR ? message.toColor() : null,
+                        gradient: message.cardIndicator == CardIndicator.GRADIENT ? message.toGradient() : null,
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      height: 80,
+                      width: message.delay.inMilliseconds * (widget.zoomFactor),
 
-                        }
-                      },
-                      builder: (
-                          BuildContext context,
-                          List<dynamic> accepted,
-                          List<dynamic> rejected,
-                        ) {
-                        var style = Theme.of(context).textTheme.headline6;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AnimatedContainer(
-                              duration: Duration(milliseconds: 200),
-                              curve: Curves.ease,
-                              decoration: BoxDecoration(
-                                color: Colors.lightBlue.withOpacity(.2),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              height: index == expandedTitle && dragType == DragType.GROUP ? 80 : 0,
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                // Note: Styles for TextSpans must be explicitly defined.
-                                // Child text spans will inherit styles from parent
-                                style: style,
-                                children: <TextSpan>[
-                                  TextSpan(text: widget.nodes[index].title ?? "Sequenz ${index + 1}",
-                                    style: TextStyle(
-                                      fontStyle: widget.nodes[index].title == null ? FontStyle.italic : null
-                                    )
-                                  ),
-                                ],
-                              ),
-                            ),
-                            AnimatedContainer(
-                                duration: Duration(milliseconds: 200),
-                                curve: Curves.ease,
-                                decoration: BoxDecoration(
-                                  color: Colors.lightBlue.withOpacity(.2),
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                height: index == expandedTitle && dragType == DragType.NODE ? 80 : 0,
-                            )
-                          ],
-                        );
-                      }
-                    ),
                   ),
-                  InnerTimeline(
-                      messages: widget.nodes[index].messages,
-                      parentId: index,
-                      onMoveNodeToOtherParent: (MoveNodeEvent e) {
-                        setState(() {
-                          EventNode node = widget.nodes[e.from.parentId].messages.removeAt(e.from.index);
-                          widget.nodes[e.to.parentId].messages.insert(e.to.index, node);
-                        });
-                        // We can just move it here
-                      },
-                  ),
-                ]
-              ],
+                );
+              },
             ),
-          );
-        },
-        indicatorBuilder: (_, index) {
-          return ContainerIndicator(
-            size: 40,
-            child: AnimatedContainer(
-              duration: Duration(milliseconds: 400),
-              curve: Curves.ease,
-              decoration: BoxDecoration(
-                color: getDotIndicatorColor(index),
-                borderRadius: BorderRadius.circular(100.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withOpacity(isRunning(index) ? .3: 0),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: Offset(0, 3), // changes position of shadow
-                  ),
-                ],
-              ),
-              child: isRunning(index) ? Padding(
-              padding: EdgeInsets.all(8),
-              child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.onPrimary,
-                strokeWidth: 2,
-              ),
-            ) :Icon(
-              getIcon(index),
-              size: 20,
-            )
-            ));
-        },
-        connectorBuilder: (_, index, ___) => hasReached(index) ? SolidLineConnector(
-          color: getDotIndicatorColor(index),
-        ) :  DashedLineConnector(
-          gap: 6,
+          ),
         ),
-      ),
+        Slider(value: widget.zoomFactor,
+            min: .005,
+            max: 1,
+            onChanged: (v) => setState(() {
+              widget.zoomFactor = v;
+            }))
+      ],
     );
   }
 
@@ -934,6 +791,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
           return Column(
             children: [
               AnimatedContainer(
+                width: 200,
                 height: isHoveringTop() ? widget.dragExpansion : 0,
                 duration: Duration(milliseconds: 100),
                 curve: Curves.ease,
@@ -944,6 +802,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
               ),
               getCard(context),
                AnimatedContainer(
+                 width: 200,
                 height: isHoveringBottom() ? widget.dragExpansion : 0,
                 duration: Duration(milliseconds: 100),
                 curve: Curves.ease,
