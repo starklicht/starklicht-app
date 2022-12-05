@@ -273,7 +273,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                 children: [
                 const Text("Interpolation:", style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(getAnimationText()),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 ToggleButtons(
                   borderRadius: const BorderRadius.all(Radius.circular(10)),
                   children: const <Widget>[
@@ -300,7 +300,7 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                   Text("Zeitfaktor: ".i18n,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Text(getRepeatText()),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                   ToggleButtons(
                   borderRadius: const BorderRadius.all(Radius.circular(10)),
                   children: const <Widget>[
@@ -544,8 +544,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   final GlobalKey _widgetKey = GlobalKey();
-  Size _currentSize = Size(0, 0);
-  Offset _currentOffset = Offset(0, 0);
+  Size _currentSize = const Size(0, 0);
+  Offset _currentOffset = const Offset(0, 0);
 
   void _getWidgetInfo(_) {
     final RenderBox renderBox = _widgetKey.currentContext?.findRenderObject() as RenderBox;
@@ -565,7 +565,7 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   @override
   void initState() {
     // TODO: implement initState
-    WidgetsBinding.instance?.addPostFrameCallback(_getWidgetInfo);
+    WidgetsBinding.instance.addPostFrameCallback(_getWidgetInfo);
     super.initState();
   }
 
@@ -1178,12 +1178,12 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
             Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+            children: const [
               CircularProgressIndicator(),
             ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
+            const Padding(
+              padding: EdgeInsets.only(top: 16.0),
               child: Text("Wird geladen..."),
             )
           ]

@@ -202,7 +202,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
           },
           customColorSwatchesAndNames: colorsNameMap,
         ),
-        TextButton.icon(label: Text("Zufallsfarbe"), icon: Icon(Icons.shuffle), onPressed: () {
+        TextButton.icon(label: const Text("Zufallsfarbe"), icon: const Icon(Icons.shuffle), onPressed: () {
           changeColor(Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0));
           updateIsColorSaved();
         },)
@@ -215,7 +215,7 @@ class ColorScaffoldWidget extends StatefulWidget {
   Function? save;
   Function? delete;
   bool emitSlowly = true;
-  Duration emitDuration = Duration(milliseconds: 400);
+  Duration emitDuration = const Duration(milliseconds: 400);
 
   String formatTime() {
     var minutes = emitDuration.inMinutes.remainder(60);
@@ -223,13 +223,13 @@ class ColorScaffoldWidget extends StatefulWidget {
     var millis = emitDuration.inMilliseconds.remainder(1000);
     var str = "";
     if(minutes > 0) {
-      str+= "${minutes} Minuten ";
+      str+= "$minutes Minuten ";
     }
     if(seconds > 0) {
-      str+= "${seconds} Sekunden ";
+      str+= "$seconds Sekunden ";
     }
     if(millis > 0) {
-      str+= "${millis} Millisekunden ";
+      str+= "$millis Millisekunden ";
     }
     if(str.trim().isEmpty) {
       return "Ohne Zeitverzögerung";
@@ -255,7 +255,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> with TickerPr
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 200),
     );
 
     _myAnimation = CurvedAnimation(
@@ -294,7 +294,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> with TickerPr
                 setState(() {
                   widget.emitSlowly = v ?? false;
                 })
-              }, title: Text("Glatte Übergänge")),
+              }, title: const Text("Glatte Übergänge")),
               ListTile(
                 title: TextButton(
                   onPressed: () {
@@ -315,7 +315,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> with TickerPr
                 trailing: IconButton(
                   icon: RotationTransition(
                     turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                    child: Icon(Icons.expand_more),
+                    child: const Icon(Icons.expand_more),
                   ),
                   onPressed: () {
                     setState(() {
@@ -330,7 +330,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget> with TickerPr
                 ),
               ),
               AnimatedContainer(
-                duration: Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 200),
                 height: timeIsExtended ? 200 : 0.00000001,
                 child: TimePicker(
                   startDuration: widget.emitDuration,

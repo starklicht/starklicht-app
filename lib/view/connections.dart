@@ -250,9 +250,9 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                         },
                                         label: Text("Aktivieren".i18n)
                                     ),
-                                    Divider(),
-                                    Text("Lampengruppen"),
-                                    Container(
+                                    const Divider(),
+                                    const Text("Lampengruppen"),
+                                    SizedBox(
                                       width: double.infinity,
                                       child: SingleChildScrollView(
                                         scrollDirection: Axis.horizontal,
@@ -282,12 +282,12 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                 onPressed: () {
                                                   showDialog(context: context, builder: (_) {
                                                     return AlertDialog(
-                                                      title: Text("Gruppenbeschränkung hinzufügen"),
+                                                      title: const Text("Gruppenbeschränkung hinzufügen"),
                                                       content: Column(
                                                         mainAxisSize: MainAxisSize.min,
                                                         crossAxisAlignment: CrossAxisAlignment.start,
                                                         children: [
-                                                          Text("Vorlagen"),
+                                                          const Text("Vorlagen"),
                                                           Padding(
                                                             padding: const EdgeInsets.only(top: 8.0),
                                                             child: Wrap(
@@ -316,8 +316,8 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                         ],
                                                       ),
                                                       actions: [
-                                                        TextButton(child: Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
-                                                        TextButton(child: Text("Speichern"), onPressed: () {
+                                                        TextButton(child: const Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
+                                                        TextButton(child: const Text("Speichern"), onPressed: () {
                                                           if(textController.text.trim().isNotEmpty) {
                                                             setState(() {
                                                               controller.setOptions(d.device.id.id, option.withTag(textController.text.trim()));
@@ -329,7 +329,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                     );
                                                   });
                                                 },
-                                                label: Icon(Icons.add),
+                                                label: const Icon(Icons.add),
                                               ),
                                             ),
                                           ]

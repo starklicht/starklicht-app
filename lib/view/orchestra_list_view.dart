@@ -1,10 +1,6 @@
 
-import 'package:timelines/timelines.dart';
 import 'package:flutter/material.dart';
 
-import '../messages/animation_message.dart';
-import '../messages/color_message.dart';
-import '../model/orchestra.dart';
 import 'orchestra_timeline_view.dart';
 
 class OrchestraListView extends StatefulWidget {
@@ -50,34 +46,34 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
               showDialog(context: context, builder: (_) {
                 return AlertDialog(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  insetPadding: EdgeInsets.all(16),
-                  contentPadding: EdgeInsets.all(16),
+                  insetPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(16),
                   title: Text(widget.animations[index]),
-                  content: Container(
+                  content: SizedBox(
                     height: 20000,
                     width: 2000,
                     child: widget.orchestra
                   ),
                   actions: [
                     IconButton(onPressed: () {
-                      print(widget.orchestra.nodes[0].messages.length);
+                      print(widget.orchestra.nodes[0].events.length);
                       setState(() {
                         widget.isPlaying = true;
                       });
                       widget.orchestra.play?.call();
-                    }, icon: widget.isPlaying ? Icon(Icons.stop) : Icon(Icons.play_arrow)),
+                    }, icon: widget.isPlaying ? const Icon(Icons.stop) : const Icon(Icons.play_arrow)),
                     TextButton(onPressed: () => {
                       Navigator.pop(context)
-                    }, child: Text("Abbrechen")),
+                    }, child: const Text("Abbrechen")),
                     TextButton(onPressed: () => {
                       Navigator.pop(context)
-                    }, child: Text("Speichern"))
+                    }, child: const Text("Speichern"))
                   ],
                 );
               })
             },
             child: ListTile(
-              contentPadding: EdgeInsets.all(18),
+              contentPadding: const EdgeInsets.all(18),
               title: Text(widget.animations[index], style: Theme.of(context).textTheme.headline5),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -85,20 +81,20 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(
-                      children: [
+                      children: const [
                         Icon(Icons.access_time, size: 16),
                         Text(" 5 Minuten "),
                         Icon(Icons.list_alt, size: 16),
                         Text(" 3 Effekte "),
                       ],
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Wrap(
                         runSpacing: 4,
                         spacing: 4,
                         children:
                     [
-                      Chip(label: Text("Kurzfilm")),
+                      const Chip(label: Text("Kurzfilm")),
                       Chip(label: Text("Szene $index"))
                     ]
                       )

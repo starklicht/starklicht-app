@@ -2,15 +2,12 @@
 import 'dart:collection';
 import 'dart:math';
 
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
-import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:timelines/timelines.dart';
 
 import '../messages/color_message.dart';
@@ -91,7 +88,7 @@ class MessageNodeExecutor {
         )
       );
       var eventQueue = Queue<EventNode>();
-      eventQueue.addAll(parent.messages);
+      eventQueue.addAll(parent.events);
       int currentChildIndex = -1;
       while(eventQueue.isNotEmpty && running) {
         var event = eventQueue.removeFirst();
@@ -135,6 +132,7 @@ class MessageNodeExecutor {
 class OrchestraTimeline extends StatefulWidget {
   var running = false;
   var zoomFactor = .2;
+  var cardHeight = 80.0;
   var restart = false;
   VoidCallback? play;
   VoidCallback? onFinishPlay;
@@ -142,14 +140,25 @@ class OrchestraTimeline extends StatefulWidget {
   List<ParentNode> nodes = [
     ParentNode(
       title: "Test",
-      messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.red), delay: Duration(seconds: 2),),
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.green), delay: Duration(seconds: 2),),
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.blue), delay: Duration(seconds: 4),),
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purple), delay: Duration(seconds: 3),),
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 1),),
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.yellow), delay: Duration(seconds: 10),),
-        MessageNode(lamps: {}, message: AnimationMessage(
+      events: [
+        MessageNode(lamps: const {}, message: BrightnessMessage(10), delay: const Duration(seconds: 2, milliseconds: 300),),
+        MessageNode(lamps: const {}, message: AnimationMessage(
+            [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+            AnimationSettingsConfig(
+              InterpolationType.linear,
+              TimeFactor.repeat,
+              0,
+              1,
+              0,
+            )
+        ), delay: const Duration(seconds: 2, milliseconds: 300),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.red), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blue), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.purple), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.yellow), delay: const Duration(seconds: 1),),
+        MessageNode(lamps: const {}, message: AnimationMessage(
           [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
           AnimationSettingsConfig(
           InterpolationType.linear,
@@ -158,38 +167,78 @@ class OrchestraTimeline extends StatefulWidget {
           1,
           0,
         )
-        ), delay: Duration(seconds: 1),)
+        ), delay: const Duration(seconds: 1),)
       ],
     ),
     ParentNode(
       title: "Test",
-      messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.green), delay: Duration(seconds: 2),)
+      events: [
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(milliseconds: 500),)
       ],
     ),
     ParentNode(
       title: "Test",
-      messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.blueGrey), delay: Duration(seconds: 2),)
+      events: [
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blueGrey), delay: const Duration(seconds: 10),)
       ],
     ),
     ParentNode(
       title: "Test",
-      messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.orange), delay: Duration(seconds: 2),)
+      events: [
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.red), delay: const Duration(seconds: 90),)
+      ],
+    ),
+    ParentNode(
+      title: "Test",
+      events: [
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blueAccent), delay: const Duration(seconds: 10),)
+      ],
+    ),
+    ParentNode(
+      title: "Test",
+      events: [
+        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(seconds: 10),)
       ],
     ),
 
-    ParentNode(
-      messages: [
-        MessageNode(lamps: {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: Duration(seconds: 1),)
-      ]
-    ),
   ];
   OrchestraTimeline({Key? key, this.play, this.onFinishPlay}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => OrchestraTimelineState();
+}
+
+class Ruler extends StatelessWidget {
+  double zoom;
+  int totalSeconds;
+  Ruler({Key? key, required this.zoom, required this.totalSeconds}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+        children: List.generate(totalSeconds * 10, (index) =>
+            Stack(
+              children: [
+                Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if(index % 10 == 0) ...[
+                        Text("${index ~/ 10}", style: const TextStyle(fontSize: 10)),
+                        const Text("|"),
+                      ] else if(zoom > .1) ...[
+                        const Text("|", style: TextStyle(color: Colors.grey)),
+                      ]
+                    ],
+                  ),
+                ),
+                Container(width: 100.0 * zoom)
+              ],
+            )
+        )
+    );
+  }
+
 }
 
 class OrchestraTimelineState extends State<OrchestraTimeline> {
@@ -203,7 +252,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
     super.initState();
     widget.play = () {
       print("OK LET'S GO!");
-      var messages = widget.nodes.expand((element) => element.messages).toList();
+      var messages = widget.nodes.expand((element) => element.events).toList();
       setState(() {
         for(var node in widget.nodes) {
           node.status = EventStatus.NONE;
@@ -219,8 +268,8 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
         },
         onChildEventUpdate: (ev) {
           setState(() {
-            widget.nodes[ev.parentIndex].messages[ev.childIndex].status = ev.status;
-            widget.nodes[ev.parentIndex].messages[ev.childIndex].progress = ev.progress;
+            widget.nodes[ev.parentIndex].events[ev.childIndex].status = ev.status;
+            widget.nodes[ev.parentIndex].events[ev.childIndex].progress = ev.progress;
           });
           Future.delayed(Duration.zero, () => setState(() {
           }));
@@ -230,11 +279,11 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
           widget.play?.call();
           return;
         }
-        Future.delayed(Duration(seconds: 1),() {
+        Future.delayed(const Duration(seconds: 1),() {
           setState(() {
             for(var node in widget.nodes) {
               node.status = EventStatus.NONE;
-              for(var message in node.messages) {
+              for(var message in node.events) {
                 message.status = EventStatus.NONE;
                 message.progress = null;
               }
@@ -253,39 +302,122 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          height: 500,
-          child: Timeline.tileBuilder(
+        SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            builder: TimelineTileBuilder.connected(
-              connectionDirection: ConnectionDirection.before,
-              itemCount: widget.nodes[0].messages.length,
-              contentsBuilder: (_, index) {
-                var message = widget.nodes[0].messages[index];
-                return Padding(
-                  padding: const EdgeInsets.all(2.0),
-                  child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        color: message.cardIndicator == CardIndicator.COLOR ? message.toColor() : null,
-                        gradient: message.cardIndicator == CardIndicator.GRADIENT ? message.toGradient() : null,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      height: 80,
-                      width: message.delay.inMilliseconds * (widget.zoomFactor),
-
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 10000,
+                    height: 40,
+                    child: Ruler(
+                      zoom: widget.zoomFactor,
+                      totalSeconds: 20,
+                    )
                   ),
-                );
-              },
-            ),
-          ),
+                  ...widget.nodes
+                    .map((e) => Row(
+                        children: e.events
+                            .map((message) => Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: message.cardIndicator == CardIndicator.PROGRESS ? Border.all(
+                                          width: 1,
+                                          color: Theme.of(context).primaryColorLight
+                                      ): null,
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      color: message.cardIndicator ==
+                                              CardIndicator.COLOR
+                                          ? message.toColor()
+                                          : null,
+                                      gradient: message.cardIndicator ==
+                                              CardIndicator.GRADIENT
+                                          ? message.toGradient()
+                                          : null,
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    height: widget.cardHeight,
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      child: ListTile(
+                                        contentPadding: const EdgeInsets.all(2),
+                                        leading: Draggable(
+                                          feedback: const Icon(
+                                              Icons.drag_indicator,
+                                              color: Colors.white,
+                                            ),
+                                          childWhenDragging: const SizedBox(),
+                                          axis: Axis.horizontal,
+                                          child:const Icon(
+                                            Icons.drag_indicator,
+                                            color: Colors.white,
+                                          ),
+                                          onDragUpdate: (data) => {
+                                            print(data)
+                                          },
+                                        ),
+                                        trailing: Draggable(
+                                          onDragUpdate: (data) => {
+
+                                            setState(() {
+                                              var deltaMill = ((data.delta.dx ?? 0) ~/ widget.zoomFactor).toInt();
+                                              message.delay += Duration(milliseconds: deltaMill);
+                                            })
+                                          },
+                                          feedback: const RotatedBox(
+                                            quarterTurns: 1,
+                                            child: Icon(
+                                              Icons.drag_handle,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          childWhenDragging: const SizedBox(),
+                                          axis: Axis.horizontal,
+                                          child:const RotatedBox(
+                                            quarterTurns: 1,
+                                            child: Icon(
+                                              Icons.drag_handle,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                        title: Wrap(
+                                          alignment: WrapAlignment.start,
+                                          direction: Axis.horizontal,
+                                          spacing: double.maxFinite,
+                                          runAlignment: WrapAlignment.center,
+                                          crossAxisAlignment: WrapCrossAlignment.center,
+                                          children: [
+                                            Text("${message.getTitle()} (${message.formatTime()})", style: const TextStyle(fontSize: 10, overflow: TextOverflow.ellipsis), maxLines: 1,),
+                                            Text(message.getSubtitleText(), style: const TextStyle(fontSize: 8, overflow: TextOverflow.ellipsis), maxLines: 1,),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    width: max(message.delay.inMilliseconds *
+                                        (widget.zoomFactor) - 4, 0),
+                                  ),
+                                ))
+                            .toList()))
+                    .toList()
+                ]
+            )
         ),
         Slider(value: widget.zoomFactor,
             min: .005,
             max: 1,
             onChanged: (v) => setState(() {
               widget.zoomFactor = v;
+            })),
+        Slider(value: widget.cardHeight,
+            min: 10,
+            max: 140,
+            onChanged: (v) => setState(() {
+              widget.cardHeight = v;
             }))
       ],
     );
@@ -512,7 +644,7 @@ class InnerTimelineState extends State<InnerTimeline> {
                       return;
                     }
                     widget.messages.add(
-                        MessageNode(lamps: {}, message: message)
+                        MessageNode(lamps: const {}, message: message)
                     );
                   });
                   refresh();
@@ -555,10 +687,10 @@ class InnerTimelineState extends State<InnerTimeline> {
           contentsBuilder: (_, index) {
             if (isLastIndex(index)) {
               return ElevatedButton(
-                  child: Icon(Icons.add),
+                  child: const Icon(Icons.add),
                   style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(8),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(8),
                   ),
                   onPressed: () => {
                     openAddDialog(context, setState)
@@ -627,7 +759,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
     if(widget.message.status == EventStatus.RUNNING) {
       return Transform.scale(scale: 0.5, child: CircularProgressIndicator(value: widget.message.progress));
     } else if(widget.message.status == EventStatus.FINISHED) {
-      return Icon(Icons.check, color: Colors.green,);
+      return const Icon(Icons.check, color: Colors.green,);
     }
     return null;
   }
@@ -667,15 +799,15 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
             isThreeLine: true,
             subtitle:
             verySmall ?
-                widget.message.lamps.length == 0 ? Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")
+                widget.message.lamps.length == 0 ? const Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")
                 :
             currentMessage.getSubtitle(context, Theme.of(context).textTheme.bodySmall!),
             trailing: verySmall ? null : Wrap(
               children: [
-                IconButton(icon: Icon(Icons.edit), onPressed: () => {
+                IconButton(icon: const Icon(Icons.edit), onPressed: () => {
                   openEditMessage(context, setState)
                 }),
-                IconButton(icon: Icon(Icons.delete), onPressed: () => {
+                IconButton(icon: const Icon(Icons.delete), onPressed: () => {
                   widget.onDelete?.call()
                 }),
               ],
@@ -688,7 +820,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
               child: Text("Gruppenbeschränkungen", style: Theme.of(context).textTheme.subtitle1),
             ),
             currentMessage,
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
           ]
         ],
       ),
@@ -714,7 +846,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
   }
 
   DragData? willAccept(DragData from) {
-    var newIndex;
+    int newIndex;
     if(from.parentId == widget.parentId) {
       if(widget.index > from.index) {
         // When Moving down
@@ -793,7 +925,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
               AnimatedContainer(
                 width: 200,
                 height: isHoveringTop() ? widget.dragExpansion : 0,
-                duration: Duration(milliseconds: 100),
+                duration: const Duration(milliseconds: 100),
                 curve: Curves.ease,
                 decoration: BoxDecoration(
                   color: Colors.lightBlue.withOpacity(.2),
@@ -804,7 +936,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
                AnimatedContainer(
                  width: 200,
                 height: isHoveringBottom() ? widget.dragExpansion : 0,
-                duration: Duration(milliseconds: 100),
+                duration: const Duration(milliseconds: 100),
                 curve: Curves.ease,
                 decoration: BoxDecoration(
                   color: Colors.lightBlue.withOpacity(.2),
@@ -860,7 +992,7 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
         },
       ),
       dragAnchorStrategy: myOffset,
-      feedback: Container(
+      feedback: SizedBox(
         width: 200,
         height: widget.dragExpansion,
         child: getCard(context, dragging: true, verySmall: true),

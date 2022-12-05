@@ -82,15 +82,15 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
 
   void setAnimations(List<AnimationMessage> an) {
     print("SETTING ANIMATIONS NEW...");
-    an.forEach((element) {
+    for (var element in an) {
       print("ELEMENT");
       print(element.colors.map((e) => e.point));
-    });
+    }
     setState(() {
       animations = [];
     });
     // FIXME: Can we do this more beautiful?
-    Future.delayed(Duration(milliseconds: 1), () => {
+    Future.delayed(const Duration(milliseconds: 1), () => {
       setState(() {
         animations = an;
       })
@@ -181,7 +181,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                       return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
                                         return AlertDialog(
                                           title: Text("Bearbeiten".i18n),
-                                          insetPadding: EdgeInsets.all(16),
+                                          insetPadding: const EdgeInsets.all(16),
                                           contentPadding: EdgeInsets.zero,
                                           content: Container(
                                             child: AnimationsEditorWidget(
@@ -283,7 +283,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                 child: Column(
                     children: [
                 ListTile(
-                  contentPadding: EdgeInsets.all(12),
+                  contentPadding: const EdgeInsets.all(12),
                   leading: AnimationPreviewWidget(
                     settings: AnimationSettingsConfig(
                       filteredAnimations()[realIndex].config.interpolationType,
@@ -297,8 +297,8 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                     ),
                     callback: null,
                     restartController: restartController,
-                    restartCallback: {},
-                    notify: {},
+                    restartCallback: const {},
+                    notify: const {},
                     isEditorPreview: false,
                     onAnimationsValidChanged: (val) => {},
                   ),

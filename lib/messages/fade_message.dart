@@ -2,7 +2,6 @@
 import 'dart:ui';
 
 import 'package:starklicht_flutter/messages/imessage.dart';
-import 'package:starklicht_flutter/model/enums.dart';
 
 class FadeMessage extends IBluetoothMessage<FadeMessage> {
   @override

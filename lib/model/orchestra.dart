@@ -7,13 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
 import 'package:starklicht_flutter/model/lamp_groups_enum.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
-import 'package:uuid/uuid.dart';
 
 import '../controller/starklicht_bluetooth_controller.dart';
-import '../messages/brightness_message.dart';
 import '../messages/color_message.dart';
-import '../persistence/persistence.dart';
-import '../view/colors.dart';
 import '../view/orchestra_timeline_view.dart';
 
 
@@ -60,6 +56,8 @@ abstract class EventNode extends INode {
 
   Widget getSubtitle(BuildContext context, TextStyle textStyle);
 
+  String getSubtitleText();
+
   String formatTime() {
     var minutes = delay.inMinutes.remainder(60);
     var seconds = delay.inSeconds.remainder(60);
@@ -69,13 +67,13 @@ abstract class EventNode extends INode {
       return "Auf Benutzereingabe warten";
     }
     if(minutes > 0) {
-      str+= "${minutes} Minuten ";
+      str+= "$minutes Minuten ";
     }
     if(seconds > 0) {
-      str+= "${seconds} Sekunden ";
+      str+= "$seconds Sekunden ";
     }
     if(millis > 0) {
-      str+= "${millis} Millisekunden ";
+      str+= "$millis Millisekunden ";
     }
     if(str.trim().isEmpty) {
       return "Ohne Zeitverzögerung";
@@ -92,6 +90,7 @@ abstract class EventNode extends INode {
 }
 
 class MessageNode extends EventNode {
+  @override
   final Set<String> lamps;
   List<String> activeLamps = [];
   IBluetoothMessage message;
@@ -137,48 +136,7 @@ class MessageNode extends EventNode {
 
   @override
   RichText getSubtitle(BuildContext context, TextStyle baseStyle) {
-    switch(message.messageType) {
-      case MessageType.color:
-        return RichText(
-            text: TextSpan(
-                style: baseStyle,
-                children: [
-                  TextSpan(text: "Setze die Farbe "),
-                  TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold))
-                ]
-            )
-        );
-      case MessageType.interpolated:
-        return RichText(
-            text: TextSpan(
-                style: baseStyle,
-                children: [
-                  TextSpan(text: "Spiele die Animation "),
-                  TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextSpan(text: " ab")
-                ]
-            )
-        );
-      case MessageType.request:
-        break;
-      case MessageType.onoff:
-        break;
-      case MessageType.poti:
-        break;
-      case MessageType.brightness:
-        return RichText(text: TextSpan(
-            style: baseStyle,
-            children: [
-              TextSpan(text: "Setze die Helligkeit auf "),
-              TextSpan(text: message.retrieveText(), style: TextStyle(fontWeight: FontWeight.bold)),
-            ]
-        ));
-      case MessageType.save:
-        break;
-      case MessageType.clear:
-        break;
-    }
-    return RichText(text: TextSpan(
+    return RichText(maxLines: 2, text: TextSpan(
         style: baseStyle,
         text: "Unbekannt")
     );
@@ -214,7 +172,7 @@ class MessageNode extends EventNode {
 
   @override
   Duration? delayAfterwards() {
-    return Duration(seconds: 1);
+    return const Duration(seconds: 1);
   }
 
   @override
@@ -243,13 +201,37 @@ class MessageNode extends EventNode {
       "message": message.toJson()
     };
   }
+
+  @override
+  String getSubtitleText() {
+    switch(message.messageType) {
+      case MessageType.color:
+        return "Setze die Farbe ${message.retrieveText()}";
+      case MessageType.interpolated:
+        return "Spiele die Animation ${message.retrieveText()}";
+
+      case MessageType.request:
+        break;
+      case MessageType.onoff:
+        break;
+      case MessageType.poti:
+        break;
+      case MessageType.brightness:
+        return "Setze die Helligkeit auf ${message.retrieveText()}";
+      case MessageType.save:
+        break;
+      case MessageType.clear:
+        break;
+    }
+    return "";
+  }
 }
 
 class ParentNode extends INode {
-  List<EventNode> messages;
+  List<EventNode> events;
   EventStatus status;
   String? title;
-  ParentNode({Key? key, update, onDelete, this.type = NodeType.NOT_DEFINED, this.messages = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
+  ParentNode({Key? key, update, onDelete, this.type = NodeType.NOT_DEFINED, this.events = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
 
   @override
   State<StatefulWidget> createState() => ParentNodeState();
@@ -257,7 +239,7 @@ class ParentNode extends INode {
   Map<String, dynamic> toJson() {
     return {
       "title": title,
-      "messages": messages.map((e) => e.toJson()),
+      "messages": events.map((e) => e.toJson()),
     };
   }
 
@@ -318,7 +300,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 200),
     );
 
     _myAnimation = CurvedAnimation(
@@ -429,12 +411,12 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                       onPressed: () {
                         showDialog(context: context, builder: (_) {
                           return AlertDialog(
-                            title: Text("Gruppenbeschränkung hinzufügen"),
+                            title: const Text("Gruppenbeschränkung hinzufügen"),
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text("Vorlagen"),
+                                const Text("Vorlagen"),
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Wrap(
@@ -463,8 +445,8 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                               ],
                             ),
                             actions: [
-                              TextButton(child: Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
-                              TextButton(child: Text("Speichern"), onPressed: () {
+                              TextButton(child: const Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
+                              TextButton(child: const Text("Speichern"), onPressed: () {
                                 if(textController.text.trim().isNotEmpty) {
                                   setState(() {
                                     widget.lamps.add(textController.text.trim());
@@ -476,12 +458,12 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                           );
                         });
                       },
-                      label: Icon(Icons.add),
+                      label: const Icon(Icons.add),
                     ),
                   )
                 ))
             ),
-            Divider(),
+            const Divider(),
             ListTile(
               title: TextButton(
                 onPressed: () {
@@ -502,7 +484,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
               trailing: IconButton(
                 icon: RotationTransition(
                   turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                  child: Icon(Icons.expand_more),
+                  child: const Icon(Icons.expand_more),
                 ),
                 onPressed: () {
                   setState(() {
@@ -517,7 +499,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
               ),
             ),
             AnimatedContainer(
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               height: timeIsExtended ? null : 0,
               child:
                   SizeTransition(
@@ -529,12 +511,12 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                           setState(() {
                             widget.waitForUserInput = t!;
                           })
-                        }, title: Text("Auf Benutzereingabe warten") ),
+                        }, title: const Text("Auf Benutzereingabe warten") ),
                         if(widget.message is ColorMessage && !widget.waitForUserInput) ...[
                           CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
                             setState(() {
                             })
-                          }, title: Text("Sanfter Übergang") ),
+                          }, title: const Text("Sanfter Übergang") ),
                         ]
                       ],
                     )
@@ -542,7 +524,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
                   )
             ),
             AnimatedContainer(
-              duration: Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               height: timeIsExtended && !widget.waitForUserInput ? 100 : 0.000001,
               child: TimePicker(
                 small: true,
