@@ -7,11 +7,8 @@ class SaveMessage extends IBluetoothMessage {
   SaveMessage(this.save, this.button);
 
   @override
-  List<int> getMessageBody({ bool inverse = false }) {
-    return [
-      save?1:0,
-      button
-    ];
+  List<int> getMessageBody({bool inverse = false}) {
+    return [save ? 1 : 0, button];
   }
 
   @override

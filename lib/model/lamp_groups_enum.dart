@@ -1,9 +1,6 @@
-
 import 'package:flutter/material.dart';
 
-enum LampGroups {
-  FILL, KEY, BACK, ATMOSPHERE, EFFECT
-}
+enum LampGroups { FILL, KEY, BACK, ATMOSPHERE, EFFECT }
 
 extension LampGroupsExtension on LampGroups {
   IconData get icon {

@@ -40,14 +40,9 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', "US"),
-        Locale('de', "DE")
-      ],
+      supportedLocales: const [Locale('en', "US"), Locale('de', "DE")],
       title: _title,
-      home: I18n(
-          child: const MyStatefulWidget()
-      ),
+      home: I18n(child: const MyStatefulWidget()),
       darkTheme: ThemeData.dark(),
       /* theme: ThemeData(
         toggleableActiveColor: Colors.blue,
@@ -93,7 +88,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   final double _red = 0;
   final BluetoothController controller = BluetoothControllerWidget();
   static const TextStyle optionStyle =
-  TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   final List<Widget> _widgetOptions = <Widget>[
     const ConnectionsWidget(),
     ColorScaffoldWidget(),
@@ -119,14 +114,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     controller.connectionChangeStream().listen((event) {
       var text = "";
       var name = event.device.options.name ?? event.device.device.name;
-      if(event.type == ConnectionType.CONNECT) {
-        if(!event.auto) {
+      if (event.type == ConnectionType.CONNECT) {
+        if (!event.auto) {
           text = "%s wurde verbunden".i18n.fill([name]);
         } else {
           text = "%s hat sich verbunden".i18n.fill([name]);
         }
       } else {
-        if(!event.auto) {
+        if (!event.auto) {
           text = "%s wurde getrennt".i18n.fill([name]);
         } else {
           text = "%s hat sich getrennt".i18n.fill([name]);
@@ -157,157 +152,193 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('STARKLICHT'.i18n, style: const TextStyle(
-          fontFamily: 'MontserratBlack',
-        )),
+        title: Text('STARKLICHT'.i18n,
+            style: const TextStyle(
+              fontFamily: 'MontserratBlack',
+            )),
         actions: <Widget>[
-          if(options.isNotEmpty)...[ IconButton(
-            onPressed: () => {
-              setState(() {
-                hideBottom = !hideBottom;
-              })
-            },
-            icon: const Icon(Icons.border_bottom),
-          ), ],
-          IconButton(onPressed: () {
-            var brightness = 100.0;
-            Persistence().getBrightness().then((i) {
-              setState(() {
-                brightness = i.toDouble();
-              });
-              showDialog(context: context, builder: (_) {
-                return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-                  return AlertDialog(
-                  scrollable: true,
-                  title: Text("Helligkeit einstellen".i18n),
-                  content: Container(
-                    child:Column(children:  [
-                      Slider(
-                      max: 100,
-                        onChangeEnd: (d) => {
-                          setState(() {
-                            brightness = d;
-                          }),
-                          controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0)),
-                          Persistence().setBrightness(brightness.toInt())
-                        },
-                        onChanged: (d) => {
-                          setState(() {
-                            brightness = d;
-                          }),
-                          controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
-                        },
-                        value: brightness,
-                      ),
-                      Text("${brightness.toInt()}%", style: const TextStyle(
-                        fontSize: 32
-                      ),)
-                    ])
-                  ),
-                    actions: [
-                      TextButton.icon(onPressed: () => {
-                        setState(() {
-                          brightness = 0;
-                        }),
-                        controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
-                      }, icon: const Icon(Icons.lightbulb_outline), label: Text("Aus".i18n)),
-                      TextButton.icon(onPressed: () => {
-                        setState(() {
-                          brightness = 100;
-                        }),
-                        controller.broadcast(BrightnessMessage(brightness  * 255 ~/ 100.0))
-                      }, icon: const Icon(Icons.lightbulb), label: Text("Max. Helligkeit".i18n))
-                    ],
-                  );});
-            }); });
-
-            }, icon: const Icon(Icons.light_mode)),
+          if (options.isNotEmpty) ...[
+            IconButton(
+              onPressed: () => {
+                setState(() {
+                  hideBottom = !hideBottom;
+                })
+              },
+              icon: const Icon(Icons.border_bottom),
+            ),
+          ],
           IconButton(
-              onPressed: () => showDialog(context: context, builder: (BuildContext context) {
-                int selectedRadio = -1;
-                return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {return AlertDialog(
-                  title: Text("Auf Button speichern".i18n),
-                  content: SizedBox(
-                      height: 110,
-                      child:Column(
-                    children: [
-                      Text("Speichere die momentan ablaufende Szene auf deinem Starklicht".i18n),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children:
-                        List<Widget>.generate(4, (int index) {
-                          return Radio<int>(
-                            value: index,
-                            groupValue: selectedRadio,
-                            onChanged: (value) {
-                              setState(() => selectedRadio = value as int);
-                            },
+              onPressed: () {
+                var brightness = 100.0;
+                Persistence().getBrightness().then((i) {
+                  setState(() {
+                    brightness = i.toDouble();
+                  });
+                  showDialog(
+                      context: context,
+                      builder: (_) {
+                        return StatefulBuilder(builder:
+                            (BuildContext context, StateSetter setState) {
+                          return AlertDialog(
+                            scrollable: true,
+                            title: Text("Helligkeit einstellen".i18n),
+                            content: Container(
+                                child: Column(children: [
+                              Slider(
+                                max: 100,
+                                onChangeEnd: (d) => {
+                                  setState(() {
+                                    brightness = d;
+                                  }),
+                                  controller.broadcast(BrightnessMessage(
+                                      brightness * 255 ~/ 100.0)),
+                                  Persistence()
+                                      .setBrightness(brightness.toInt())
+                                },
+                                onChanged: (d) => {
+                                  setState(() {
+                                    brightness = d;
+                                  }),
+                                  controller.broadcast(BrightnessMessage(
+                                      brightness * 255 ~/ 100.0))
+                                },
+                                value: brightness,
+                              ),
+                              Text(
+                                "${brightness.toInt()}%",
+                                style: const TextStyle(fontSize: 32),
+                              )
+                            ])),
+                            actions: [
+                              TextButton.icon(
+                                  onPressed: () => {
+                                        setState(() {
+                                          brightness = 0;
+                                        }),
+                                        controller.broadcast(BrightnessMessage(
+                                            brightness * 255 ~/ 100.0))
+                                      },
+                                  icon: const Icon(Icons.lightbulb_outline),
+                                  label: Text("Aus".i18n)),
+                              TextButton.icon(
+                                  onPressed: () => {
+                                        setState(() {
+                                          brightness = 100;
+                                        }),
+                                        controller.broadcast(BrightnessMessage(
+                                            brightness * 255 ~/ 100.0))
+                                      },
+                                  icon: const Icon(Icons.lightbulb),
+                                  label: Text("Max. Helligkeit".i18n))
+                            ],
                           );
-                        }),
-                      ),
-                      if(selectedRadio >= 0) ...[Text("Wird auf Button %d gespeichert".i18n.fill([selectedRadio + 1]))]
-
-                    ],
-                  )),
-                    actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: Text("Abbrechen".i18n)),
-                      TextButton(onPressed: selectedRadio < 0?null:() {
-                        loadFromLamp(selectedRadio);
-                        Navigator.pop(context);
-                      }, child: Text("Laden".i18n)),
-                    TextButton(onPressed: selectedRadio < 0?null:() {
-                      saveToLamp(selectedRadio);
-                      Navigator.pop(context);
-                    }, child: Text("Speichern".i18n))
-                  ],);},
-
-                );
-              }),
-              icon: const Icon(Icons.save_alt)
-          ),
+                        });
+                      });
+                });
+              },
+              icon: const Icon(Icons.light_mode)),
+          IconButton(
+              onPressed: () => showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    int selectedRadio = -1;
+                    return StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return AlertDialog(
+                          title: Text("Auf Button speichern".i18n),
+                          content: SizedBox(
+                              height: 110,
+                              child: Column(
+                                children: [
+                                  Text(
+                                      "Speichere die momentan ablaufende Szene auf deinem Starklicht"
+                                          .i18n),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children:
+                                        List<Widget>.generate(4, (int index) {
+                                      return Radio<int>(
+                                        value: index,
+                                        groupValue: selectedRadio,
+                                        onChanged: (value) {
+                                          setState(() =>
+                                              selectedRadio = value as int);
+                                        },
+                                      );
+                                    }),
+                                  ),
+                                  if (selectedRadio >= 0) ...[
+                                    Text("Wird auf Button %d gespeichert"
+                                        .i18n
+                                        .fill([selectedRadio + 1]))
+                                  ]
+                                ],
+                              )),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text("Abbrechen".i18n)),
+                            TextButton(
+                                onPressed: selectedRadio < 0
+                                    ? null
+                                    : () {
+                                        loadFromLamp(selectedRadio);
+                                        Navigator.pop(context);
+                                      },
+                                child: Text("Laden".i18n)),
+                            TextButton(
+                                onPressed: selectedRadio < 0
+                                    ? null
+                                    : () {
+                                        saveToLamp(selectedRadio);
+                                        Navigator.pop(context);
+                                      },
+                                child: Text("Speichern".i18n))
+                          ],
+                        );
+                      },
+                    );
+                  }),
+              icon: const Icon(Icons.save_alt)),
         ],
       ),
-      bottomSheet: options.isEmpty || hideBottom ? null : Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.all(Radius.circular(3)),
-            border: Border.all(
-              color: Theme.of(context).dividerColor
-            ),
-            color: Theme.of(context).cardColor
-          ),
-          height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children:
-             options.map((e) =>
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                    children:
-                    [
-                      Checkbox(
-                        value: e.options.active,
-                        onChanged: (v) => {
-                          setState(() {
-                            controller.setOptions(e.device.id.id, e.options.withActive(v!));
-                          }),
-                        },
-                      ),
-                      Text(controller.getName(e.device.id.id)),
-                    ]
-                ),
-              )
-            ).toList()
-        )
-      ),
+      bottomSheet: options.isEmpty || hideBottom
+          ? null
+          : Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                  color: Theme.of(context).cardColor),
+              height: 40,
+              child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: options
+                      .map((e) => Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(children: [
+                              Checkbox(
+                                value: e.options.active,
+                                onChanged: (v) => {
+                                  setState(() {
+                                    controller.setOptions(e.device.id.id,
+                                        e.options.withActive(v!));
+                                  }),
+                                },
+                              ),
+                              Text(controller.getName(e.device.id.id)),
+                            ]),
+                          ))
+                      .toList())),
       body: Padding(
-        padding: options.isEmpty || hideBottom ? EdgeInsets.zero:const EdgeInsets.only(bottom: 56),
+        padding: options.isEmpty || hideBottom
+            ? EdgeInsets.zero
+            : const EdgeInsets.only(bottom: 56),
         child: Center(child: _widgetOptions.elementAt(_selectedIndex)),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -321,17 +352,15 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
             label: 'Farbe'.i18n,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.animation),
-            label: 'Animation'.i18n
-          ),
+              icon: const Icon(Icons.animation), label: 'Animation'.i18n),
           BottomNavigationBarItem(
             icon: const Icon(Icons.book),
             label: 'Bibliothek'.i18n,
           ),
-          if(widget.showOrchestra) ... [const BottomNavigationBarItem(
-            icon: Icon(Icons.view_timeline),
-            label: 'Timelines'
-          )]
+          if (widget.showOrchestra) ...[
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.view_timeline), label: 'Timelines')
+          ]
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

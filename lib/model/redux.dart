@@ -1,9 +1,7 @@
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/view/animations.dart';
 
-enum Actions {
-  SetAnimationSettingsConfig
-}
+enum Actions { SetAnimationSettingsConfig }
 
 class AnimationSettingsConfig {
   InterpolationType interpolationType;
@@ -14,21 +12,20 @@ class AnimationSettingsConfig {
   Function? callback;
 
   AnimationSettingsConfig(
-      this.interpolationType,
-      this.timefactor,
-      this.minutes,
-      this.seconds,
-      this.millis,
-      );
+    this.interpolationType,
+    this.timefactor,
+    this.minutes,
+    this.seconds,
+    this.millis,
+  );
 
   Map<String, dynamic> toJson() => {
-    'interpolationType': interpolationType.index,
-    'timeFactor': timefactor.index,
-    'minutes': minutes,
-    'millis': millis,
-    'seconds': seconds
-  };
-
+        'interpolationType': interpolationType.index,
+        'timeFactor': timefactor.index,
+        'minutes': minutes,
+        'millis': millis,
+        'seconds': seconds
+      };
 }
 
 class GradientSettingsConfig {
@@ -36,6 +33,6 @@ class GradientSettingsConfig {
   Function? callback;
 
   GradientSettingsConfig(
-      this.colors,
-      );
+    this.colors,
+  );
 }

@@ -1,4 +1,3 @@
-
 import 'dart:collection';
 import 'dart:math';
 
@@ -16,9 +15,7 @@ import '../model/orchestra.dart';
 import '../persistence/persistence.dart';
 import 'colors.dart';
 
-enum EventStatus {
-  NONE, PENDING, RUNNING, FINISHED
-}
+enum EventStatus { NONE, PENDING, RUNNING, FINISHED }
 
 class EventChanged {
   int index;
@@ -31,7 +28,8 @@ class ChildEventChanged {
   int childIndex;
   EventStatus status;
   double? progress;
-  ChildEventChanged(this.parentIndex, this.childIndex, this.status, {this.progress});
+  ChildEventChanged(this.parentIndex, this.childIndex, this.status,
+      {this.progress});
 }
 
 class MessageNodeExecutor {
@@ -42,33 +40,39 @@ class MessageNodeExecutor {
   ValueChanged<EventChanged>? onEventUpdate;
   ValueChanged<ChildEventChanged>? onChildEventUpdate;
 
-  MessageNodeExecutor(this.nodes, { this.running = false, this.onProgressChanged, this.onEventUpdate, this.onChildEventUpdate });
+  MessageNodeExecutor(this.nodes,
+      {this.running = false,
+      this.onProgressChanged,
+      this.onEventUpdate,
+      this.onChildEventUpdate});
 
   Future<bool> waitForUserInput(BuildContext context) async {
     var continueProgram = false;
-    await showDialog(context: context, builder: (_) {
-      return AlertDialog(
-        title: const Text("Programm ist pausiert"),
-        content: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            CircularProgressIndicator(strokeWidth: 2,),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () =>
-          {
-            continueProgram = false,
-            Navigator.pop(context)
-          }, child: const Text("Abbrechen")),
-          TextButton(onPressed: () => {
-            continueProgram = true,
-            Navigator.pop(context)
-          }, child: const Text("Fortsetzen"))
-        ],
-      );
-    }).then((value) => {
-    });
+    await showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title: const Text("Programm ist pausiert"),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () =>
+                      {continueProgram = false, Navigator.pop(context)},
+                  child: const Text("Abbrechen")),
+              TextButton(
+                  onPressed: () =>
+                      {continueProgram = true, Navigator.pop(context)},
+                  child: const Text("Fortsetzen"))
+            ],
+          );
+        }).then((value) => {});
     return continueProgram;
   }
 
@@ -78,29 +82,23 @@ class MessageNodeExecutor {
     print("Queue with ${queue.length} elements");
     running = true;
     int currentIndex = -1;
-    while(queue.isNotEmpty && running) {
+    while (queue.isNotEmpty && running) {
       var parent = queue.removeFirst();
       currentIndex++;
-      onEventUpdate?.call(
-        EventChanged(
-          currentIndex,
-          EventStatus.RUNNING
-        )
-      );
+      onEventUpdate?.call(EventChanged(currentIndex, EventStatus.RUNNING));
       var eventQueue = Queue<EventNode>();
       eventQueue.addAll(parent.events);
       int currentChildIndex = -1;
-      while(eventQueue.isNotEmpty && running) {
+      while (eventQueue.isNotEmpty && running) {
         var event = eventQueue.removeFirst();
         currentChildIndex++;
-        onChildEventUpdate?.call(
-          ChildEventChanged(currentIndex, currentChildIndex, EventStatus.RUNNING)
-        );
+        onChildEventUpdate?.call(ChildEventChanged(
+            currentIndex, currentChildIndex, EventStatus.RUNNING));
         await event.execute();
-        if(event.waitForUserInput) {
+        if (event.waitForUserInput) {
           print("Waiting for user Input");
           await waitForUserInput(context);
-        } else if(event.delay.inMilliseconds > 0) {
+        } else if (event.delay.inMilliseconds > 0) {
           var startTime = DateTime.now().millisecondsSinceEpoch;
           running = true;
           var elapsedMillis = 0;
@@ -109,21 +107,16 @@ class MessageNodeExecutor {
               elapsedMillis = DateTime.now().millisecondsSinceEpoch - startTime;
               print(elapsedMillis);
               var progress = elapsedMillis / event.delay.inMilliseconds;
-              onChildEventUpdate?.call(
-                ChildEventChanged(currentIndex, currentChildIndex, EventStatus.RUNNING, progress: progress));
+              onChildEventUpdate?.call(ChildEventChanged(
+                  currentIndex, currentChildIndex, EventStatus.RUNNING,
+                  progress: progress));
             });
-          } while(elapsedMillis <= event.delay.inMilliseconds);
+          } while (elapsedMillis <= event.delay.inMilliseconds);
         }
-        onChildEventUpdate?.call(
-            ChildEventChanged(currentIndex, currentChildIndex, EventStatus.FINISHED)
-        );
+        onChildEventUpdate?.call(ChildEventChanged(
+            currentIndex, currentChildIndex, EventStatus.FINISHED));
       }
-      onEventUpdate?.call(
-          EventChanged(
-              currentIndex,
-              EventStatus.FINISHED
-          )
-      );
+      onEventUpdate?.call(EventChanged(currentIndex, EventStatus.FINISHED));
     }
     print("Finished");
   }
@@ -141,66 +134,119 @@ class OrchestraTimeline extends StatefulWidget {
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: BrightnessMessage(10), delay: const Duration(seconds: 2, milliseconds: 300),),
-        MessageNode(lamps: const {}, message: AnimationMessage(
-            [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
-            AnimationSettingsConfig(
-              InterpolationType.linear,
-              TimeFactor.repeat,
-              0,
-              1,
-              0,
-            )
-        ), delay: const Duration(seconds: 2, milliseconds: 300),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.red), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blue), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.purple), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.purpleAccent), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.yellow), delay: const Duration(seconds: 1),),
-        MessageNode(lamps: const {}, message: AnimationMessage(
-          [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
-          AnimationSettingsConfig(
-          InterpolationType.linear,
-          TimeFactor.repeat,
-          0,
-          1,
-          0,
+        MessageNode(
+          lamps: const {},
+          message: BrightnessMessage(10),
+          delay: const Duration(seconds: 2, milliseconds: 300),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 2, milliseconds: 300),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.red),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.green),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.purple),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.purpleAccent),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.yellow),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
         )
-        ), delay: const Duration(seconds: 1),)
       ],
     ),
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(milliseconds: 500),)
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.green),
+          delay: const Duration(milliseconds: 500),
+        )
       ],
     ),
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blueGrey), delay: const Duration(seconds: 10),)
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blueGrey),
+          delay: const Duration(seconds: 10),
+        )
       ],
     ),
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.red), delay: const Duration(seconds: 90),)
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.red),
+          delay: const Duration(seconds: 90),
+        )
       ],
     ),
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.blueAccent), delay: const Duration(seconds: 10),)
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blueAccent),
+          delay: const Duration(seconds: 10),
+        )
       ],
     ),
     ParentNode(
       title: "Test",
       events: [
-        MessageNode(lamps: const {}, message: ColorMessage.fromColor(Colors.green), delay: const Duration(seconds: 10),)
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.green),
+          delay: const Duration(seconds: 10),
+        )
       ],
     ),
-
   ];
   OrchestraTimeline({Key? key, this.play, this.onFinishPlay}) : super(key: key);
 
@@ -211,41 +257,41 @@ class OrchestraTimeline extends StatefulWidget {
 class Ruler extends StatelessWidget {
   double zoom;
   int totalSeconds;
-  Ruler({Key? key, required this.zoom, required this.totalSeconds}) : super(key: key);
+  Ruler({Key? key, required this.zoom, required this.totalSeconds})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Row(
-        children: List.generate(totalSeconds * 10, (index) =>
-            Stack(
-              children: [
-                Container(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if(index % 10 == 0) ...[
-                        Text("${index ~/ 10}", style: const TextStyle(fontSize: 10)),
-                        const Text("|"),
-                      ] else if(zoom > .1) ...[
-                        const Text("|", style: TextStyle(color: Colors.grey)),
-                      ]
-                    ],
-                  ),
-                ),
-                Container(width: 100.0 * zoom)
-              ],
-            )
-        )
-    );
+        children: List.generate(
+            totalSeconds * 10,
+            (index) => Stack(
+                  children: [
+                    Container(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (index % 10 == 0) ...[
+                            Text("${index ~/ 10}",
+                                style: const TextStyle(fontSize: 10)),
+                            const Text("|"),
+                          ] else if (zoom > .1) ...[
+                            const Text("|",
+                                style: TextStyle(color: Colors.grey)),
+                          ]
+                        ],
+                      ),
+                    ),
+                    Container(width: 100.0 * zoom)
+                  ],
+                )));
   }
-
 }
 
 class OrchestraTimelineState extends State<OrchestraTimeline> {
   IconData getDraggingIcon(int length) {
     return Icons.collections_bookmark_outlined;
   }
-
 
   @override
   void initState() {
@@ -254,36 +300,35 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
       print("OK LET'S GO!");
       var messages = widget.nodes.expand((element) => element.events).toList();
       setState(() {
-        for(var node in widget.nodes) {
+        for (var node in widget.nodes) {
           node.status = EventStatus.NONE;
         }
       });
       print(messages.length);
-      MessageNodeExecutor(
-        widget.nodes,
-        onEventUpdate: (ev) => {
-          setState(() {
-            widget.nodes[ev.index].status = ev.status;
-          })
-        },
-        onChildEventUpdate: (ev) {
-          setState(() {
-            widget.nodes[ev.parentIndex].events[ev.childIndex].status = ev.status;
-            widget.nodes[ev.parentIndex].events[ev.childIndex].progress = ev.progress;
-          });
-          Future.delayed(Duration.zero, () => setState(() {
-          }));
-        }
-      ).execute(context).then((value) {
-        if(widget.restart) {
+      MessageNodeExecutor(widget.nodes,
+          onEventUpdate: (ev) => {
+                setState(() {
+                  widget.nodes[ev.index].status = ev.status;
+                })
+              },
+          onChildEventUpdate: (ev) {
+            setState(() {
+              widget.nodes[ev.parentIndex].events[ev.childIndex].status =
+                  ev.status;
+              widget.nodes[ev.parentIndex].events[ev.childIndex].progress =
+                  ev.progress;
+            });
+            Future.delayed(Duration.zero, () => setState(() {}));
+          }).execute(context).then((value) {
+        if (widget.restart) {
           widget.play?.call();
           return;
         }
-        Future.delayed(const Duration(seconds: 1),() {
+        Future.delayed(const Duration(seconds: 1), () {
           setState(() {
-            for(var node in widget.nodes) {
+            for (var node in widget.nodes) {
               node.status = EventStatus.NONE;
-              for(var message in node.events) {
+              for (var message in node.events) {
                 message.status = EventStatus.NONE;
                 message.progress = null;
               }
@@ -291,7 +336,6 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
           });
           widget.onFinishPlay?.call();
         });
-
       });
     };
   }
@@ -307,147 +351,170 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
       children: [
         SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 10000,
-                    height: 40,
-                    child: Ruler(
-                      zoom: widget.zoomFactor,
-                      totalSeconds: 20,
-                    )
-                  ),
-                  ...widget.nodes
-                    .map((e) => Row(
-                        children: e.events
-                            .map((message) => Padding(
-                                  padding: const EdgeInsets.all(2),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              SizedBox(
+                  width: 10000,
+                  height: 40,
+                  child: Ruler(
+                    zoom: widget.zoomFactor,
+                    totalSeconds: 20,
+                  )),
+              ...widget.nodes
+                  .map((e) => Row(
+                      children: e.events
+                          .map((message) => Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    border: message.cardIndicator ==
+                                            CardIndicator.PROGRESS
+                                        ? Border.all(
+                                            width: 1,
+                                            color: Theme.of(context)
+                                                .primaryColorLight)
+                                        : null,
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    color: message.cardIndicator ==
+                                            CardIndicator.COLOR
+                                        ? message.toColor()
+                                        : null,
+                                    gradient: message.cardIndicator ==
+                                            CardIndicator.GRADIENT
+                                        ? message.toGradient()
+                                        : null,
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  height: widget.cardHeight,
                                   child: Container(
-                                    decoration: BoxDecoration(
-                                      border: message.cardIndicator == CardIndicator.PROGRESS ? Border.all(
-                                          width: 1,
-                                          color: Theme.of(context).primaryColorLight
-                                      ): null,
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      color: message.cardIndicator ==
-                                              CardIndicator.COLOR
-                                          ? message.toColor()
-                                          : null,
-                                      gradient: message.cardIndicator ==
-                                              CardIndicator.GRADIENT
-                                          ? message.toGradient()
-                                          : null,
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    height: widget.cardHeight,
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      child: ListTile(
-                                        contentPadding: const EdgeInsets.all(2),
-                                        leading: Draggable(
-                                          feedback: const Icon(
-                                              Icons.drag_indicator,
-                                              color: Colors.white,
-                                            ),
-                                          childWhenDragging: const SizedBox(),
-                                          axis: Axis.horizontal,
-                                          child:const Icon(
-                                            Icons.drag_indicator,
+                                    alignment: Alignment.center,
+                                    child: ListTile(
+                                      contentPadding: const EdgeInsets.all(2),
+                                      leading: Draggable(
+                                        feedback: const Icon(
+                                          Icons.drag_indicator,
+                                          color: Colors.white,
+                                        ),
+                                        childWhenDragging: const SizedBox(),
+                                        axis: Axis.horizontal,
+                                        child: const Icon(
+                                          Icons.drag_indicator,
+                                          color: Colors.white,
+                                        ),
+                                        onDragUpdate: (data) => {print(data)},
+                                      ),
+                                      trailing: Draggable(
+                                        onDragUpdate: (data) => {
+                                          setState(() {
+                                            var deltaMill =
+                                                ((data.delta.dx ?? 0) ~/
+                                                        widget.zoomFactor)
+                                                    .toInt();
+                                            message.delay += Duration(
+                                                milliseconds: deltaMill);
+                                          })
+                                        },
+                                        feedback: const RotatedBox(
+                                          quarterTurns: 1,
+                                          child: Icon(
+                                            Icons.drag_handle,
                                             color: Colors.white,
                                           ),
-                                          onDragUpdate: (data) => {
-                                            print(data)
-                                          },
                                         ),
-                                        trailing: Draggable(
-                                          onDragUpdate: (data) => {
-
-                                            setState(() {
-                                              var deltaMill = ((data.delta.dx ?? 0) ~/ widget.zoomFactor).toInt();
-                                              message.delay += Duration(milliseconds: deltaMill);
-                                            })
-                                          },
-                                          feedback: const RotatedBox(
-                                            quarterTurns: 1,
-                                            child: Icon(
-                                              Icons.drag_handle,
-                                              color: Colors.white,
-                                            ),
+                                        childWhenDragging: const SizedBox(),
+                                        axis: Axis.horizontal,
+                                        child: const RotatedBox(
+                                          quarterTurns: 1,
+                                          child: Icon(
+                                            Icons.drag_handle,
+                                            color: Colors.white,
                                           ),
-                                          childWhenDragging: const SizedBox(),
-                                          axis: Axis.horizontal,
-                                          child:const RotatedBox(
-                                            quarterTurns: 1,
-                                            child: Icon(
-                                              Icons.drag_handle,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                        title: Wrap(
-                                          alignment: WrapAlignment.start,
-                                          direction: Axis.horizontal,
-                                          spacing: double.maxFinite,
-                                          runAlignment: WrapAlignment.center,
-                                          crossAxisAlignment: WrapCrossAlignment.center,
-                                          children: [
-                                            Text("${message.getTitle()} (${message.formatTime()})", style: const TextStyle(fontSize: 10, overflow: TextOverflow.ellipsis), maxLines: 1,),
-                                            Text(message.getSubtitleText(), style: const TextStyle(fontSize: 8, overflow: TextOverflow.ellipsis), maxLines: 1,),
-                                          ],
                                         ),
                                       ),
+                                      title: Wrap(
+                                        alignment: WrapAlignment.start,
+                                        direction: Axis.horizontal,
+                                        spacing: double.maxFinite,
+                                        runAlignment: WrapAlignment.center,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: [
+                                          Text(
+                                            "${message.getTitle()} (${message.formatTime()})",
+                                            style: const TextStyle(
+                                                fontSize: 10,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                            maxLines: 1,
+                                          ),
+                                          Text(
+                                            message.getSubtitleText(),
+                                            style: const TextStyle(
+                                                fontSize: 8,
+                                                overflow:
+                                                    TextOverflow.ellipsis),
+                                            maxLines: 1,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    width: max(message.delay.inMilliseconds *
-                                        (widget.zoomFactor) - 4, 0),
                                   ),
-                                ))
-                            .toList()))
-                    .toList()
-                ]
-            )
-        ),
-        Slider(value: widget.zoomFactor,
+                                  width: max(
+                                      message.delay.inMilliseconds *
+                                              (widget.zoomFactor) -
+                                          4,
+                                      0),
+                                ),
+                              ))
+                          .toList()))
+                  .toList()
+            ])),
+        Slider(
+            value: widget.zoomFactor,
             min: .005,
             max: 1,
             onChanged: (v) => setState(() {
-              widget.zoomFactor = v;
-            })),
-        Slider(value: widget.cardHeight,
+                  widget.zoomFactor = v;
+                })),
+        Slider(
+            value: widget.cardHeight,
             min: 10,
             max: 140,
             onChanged: (v) => setState(() {
-              widget.cardHeight = v;
-            }))
+                  widget.cardHeight = v;
+                }))
       ],
     );
   }
 
   bool hasReached(index) {
-    if(index > widget.nodes.length - 1) {
-      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+    if (index > widget.nodes.length - 1) {
+      if (widget.nodes[widget.nodes.length - 1].status ==
+          EventStatus.FINISHED) {
         return true;
       }
       return false;
     }
-    return widget.nodes[index].status == EventStatus.RUNNING || widget.nodes[index].status == EventStatus.FINISHED;
+    return widget.nodes[index].status == EventStatus.RUNNING ||
+        widget.nodes[index].status == EventStatus.FINISHED;
   }
 
   bool isRunning(index) {
-    if(index > widget.nodes.length - 1) {
+    if (index > widget.nodes.length - 1) {
       return false;
     }
     return widget.nodes[index].status == EventStatus.RUNNING;
   }
 
   IconData getIcon(index) {
-    if(index > widget.nodes.length - 1) {
-      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+    if (index > widget.nodes.length - 1) {
+      if (widget.nodes[widget.nodes.length - 1].status ==
+          EventStatus.FINISHED) {
         return Icons.checklist;
       }
       return Icons.flag;
     }
-    switch(widget.nodes[index].status) {
+    switch (widget.nodes[index].status) {
       case EventStatus.NONE:
         return Icons.arrow_downward;
       case EventStatus.PENDING:
@@ -460,13 +527,14 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   }
 
   Color getDotIndicatorColor(index) {
-    if(index > widget.nodes.length - 1) {
-      if(widget.nodes[widget.nodes.length - 1].status == EventStatus.FINISHED) {
+    if (index > widget.nodes.length - 1) {
+      if (widget.nodes[widget.nodes.length - 1].status ==
+          EventStatus.FINISHED) {
         return Colors.green;
       }
       return Theme.of(context).colorScheme.background;
     }
-    switch(widget.nodes[index].status) {
+    switch (widget.nodes[index].status) {
       case EventStatus.PENDING:
         return Colors.blueGrey;
       case EventStatus.RUNNING:
@@ -499,7 +567,12 @@ class InnerTimeline extends StatefulWidget {
   ExpansionDirection expansionDirection = ExpansionDirection.BOTTOM;
   ValueChanged<MoveNodeEvent> onMoveNodeToOtherParent;
 
-  InnerTimeline({Key? key, required this.messages, required this.parentId, required this.onMoveNodeToOtherParent}) : super(key: key);
+  InnerTimeline(
+      {Key? key,
+      required this.messages,
+      required this.parentId,
+      required this.onMoveNodeToOtherParent})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => InnerTimelineState();
@@ -517,30 +590,28 @@ class MoveNodeEvent {
   MoveNodeEvent({required this.from, required this.to});
 }
 
-enum DragType {
-  GROUP, NODE
-}
+enum DragType { GROUP, NODE }
 
 class DragData {
   int parentId;
   int index;
   DragType dragType;
-  DragData({required this.parentId, required this.index, required this.dragType});
+  DragData(
+      {required this.parentId, required this.index, required this.dragType});
 
   bool equals(var other) {
-    if(other is DragData) {
-      return parentId == other.parentId && index == other.index && dragType == other.dragType;
+    if (other is DragData) {
+      return parentId == other.parentId &&
+          index == other.index &&
+          dragType == other.dragType;
     }
     return false;
   }
 }
 
-enum ExpansionDirection {
-  TOP, BOTTOM
-}
+enum ExpansionDirection { TOP, BOTTOM }
 
 class InnerTimelineState extends State<InnerTimeline> {
-
   List<AnimationMessage> _animationStore = [];
   var _messageType = MessageType.brightness;
   var _currentBrightness = 100.0;
@@ -551,109 +622,139 @@ class InnerTimelineState extends State<InnerTimeline> {
   }
 
   void openAddDialog(BuildContext context, StateSetter setState) {
-    showDialog(context: context, builder: (_) {
-      Persistence().getAnimationStore().then((value) => _animationStore = value);
-      int? selectedAnimation = 0;
-      return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-        return AlertDialog(
-          scrollable: true,
-          title: const Text("Zeitevent hinzufügen"),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TODO Export this into an own fucker
-              RadioListTile<MessageType>(value: MessageType.brightness,
-                  title: const Text("Helligkeit"),
-                  groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}),
-              RadioListTile<MessageType>(value: MessageType.color,
-                  title: const Text("Farbe"),
-                  groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}),
-              RadioListTile<MessageType>(value: MessageType.interpolated,
-                  title: const Text("Animation"),
-                  groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}),
-              if(_messageType == MessageType.brightness) ... [
-                Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                Column(children: [
-                  Slider(
-                    max: 100,
-                    onChangeEnd: (d) => {
-                      setState(() {
-                        _currentBrightness = d;
-                      }),
-                    },
-                    onChanged: (d) => {
-                      setState(() {
-                        _currentBrightness = d;
-                      }),
-                    },
-                    value: _currentBrightness,
-                  ),
-                  Text("${_currentBrightness.toInt()}%", style: const TextStyle(
-                      fontSize: 32
-                  ),)
-                ],)
-              ]
-              else if(_messageType == MessageType.color) ...[
-                Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                ColorsWidget(
-                  startColor: _currentColor,
-                  onChanged: (c) => { setState(() {
-                    _currentColor = c;
-                  }) },
-                )
-              ]
-              else if (_messageType == MessageType.interpolated) ...[
-                  Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                  // Persistence
-                  DropdownButton<int>(
-                      items: _animationStore.mapIndexed((animation, index) => DropdownMenuItem<int>(value: index, child: Text(animation.title!))).toList(),
+    showDialog(
+        context: context,
+        builder: (_) {
+          Persistence()
+              .getAnimationStore()
+              .then((value) => _animationStore = value);
+          int? selectedAnimation = 0;
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text("Zeitevent hinzufügen"),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // TODO Export this into an own fucker
+                  RadioListTile<MessageType>(
+                      value: MessageType.brightness,
+                      title: const Text("Helligkeit"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  RadioListTile<MessageType>(
+                      value: MessageType.color,
+                      title: const Text("Farbe"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  RadioListTile<MessageType>(
+                      value: MessageType.interpolated,
+                      title: const Text("Animation"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  if (_messageType == MessageType.brightness) ...[
+                    Text("Helligkeit bestimmen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    Column(
+                      children: [
+                        Slider(
+                          max: 100,
+                          onChangeEnd: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          onChanged: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          value: _currentBrightness,
+                        ),
+                        Text(
+                          "${_currentBrightness.toInt()}%",
+                          style: const TextStyle(fontSize: 32),
+                        )
+                      ],
+                    )
+                  ] else if (_messageType == MessageType.color) ...[
+                    Text("Farbe auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    ColorsWidget(
+                      startColor: _currentColor,
+                      onChanged: (c) => {
+                        setState(() {
+                          _currentColor = c;
+                        })
+                      },
+                    )
+                  ] else if (_messageType == MessageType.interpolated) ...[
+                    Text("Animation aus Liste auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    // Persistence
+                    DropdownButton<int>(
+                      items: _animationStore
+                          .mapIndexed((animation, index) =>
+                              DropdownMenuItem<int>(
+                                  value: index, child: Text(animation.title!)))
+                          .toList(),
                       onChanged: (i) => {
                         setState(() {
                           selectedAnimation = i;
                         })
-                    },
-                    value: selectedAnimation,
-                  )
-                ]
-            ],
-          ),
-          actions: [
-            TextButton(
-                child: const Text("Abbrechen"),
-                onPressed: () => {Navigator.pop(context)}),
-            TextButton(
-                child: const Text("Hinzufügen"),
-                onPressed: () {
-                  setState((){
-                    // TODO: Implement factory pattern
-                    IBluetoothMessage? message;
-                    if(_messageType == MessageType.color) {
-                      message = ColorMessage.fromColor(_currentColor);
-                    } else if(_messageType == MessageType.brightness) {
-                      message = BrightnessMessage(_currentBrightness.toInt());
-                    }
-                    if(_messageType == MessageType.interpolated) {
-                      if(selectedAnimation != null ) {
-                        message = _animationStore[selectedAnimation!];
-                      }
-                    }
-                    if(message == null) {
-                      return;
-                    }
-                    widget.messages.add(
-                        MessageNode(lamps: const {}, message: message)
-                    );
-                  });
-                  refresh();
-                  Navigator.pop(context);
-                })
-          ],
-        );
-      });
-    });
+                      },
+                      value: selectedAnimation,
+                    )
+                  ]
+                ],
+              ),
+              actions: [
+                TextButton(
+                    child: const Text("Abbrechen"),
+                    onPressed: () => {Navigator.pop(context)}),
+                TextButton(
+                    child: const Text("Hinzufügen"),
+                    onPressed: () {
+                      setState(() {
+                        // TODO: Implement factory pattern
+                        IBluetoothMessage? message;
+                        if (_messageType == MessageType.color) {
+                          message = ColorMessage.fromColor(_currentColor);
+                        } else if (_messageType == MessageType.brightness) {
+                          message =
+                              BrightnessMessage(_currentBrightness.toInt());
+                        }
+                        if (_messageType == MessageType.interpolated) {
+                          if (selectedAnimation != null) {
+                            message = _animationStore[selectedAnimation!];
+                          }
+                        }
+                        if (message == null) {
+                          return;
+                        }
+                        widget.messages.add(
+                            MessageNode(lamps: const {}, message: message));
+                      });
+                      refresh();
+                      Navigator.pop(context);
+                    })
+              ],
+            );
+          });
+        });
   }
 
   @override
@@ -672,57 +773,55 @@ class InnerTimelineState extends State<InnerTimeline> {
         theme: TimelineTheme.of(context).copyWith(
           nodePosition: 0,
           connectorTheme: TimelineTheme.of(context).connectorTheme.copyWith(
-            thickness: 1.0,
-          ),
+                thickness: 1.0,
+              ),
           indicatorTheme: TimelineTheme.of(context).indicatorTheme.copyWith(
-            size: 10.0,
-            position: 0.5,
-          ),
+                size: 10.0,
+                position: 0.5,
+              ),
         ),
         builder: TimelineTileBuilder(
           indicatorBuilder: (_, index) =>
-          !isEdgeIndex(index) ? Indicator.outlined(borderWidth: 1.0) : null,
+              !isEdgeIndex(index) ? Indicator.outlined(borderWidth: 1.0) : null,
           startConnectorBuilder: (_, index) => Connector.solidLine(),
           endConnectorBuilder: (_, index) => Connector.solidLine(),
           contentsBuilder: (_, index) {
             if (isLastIndex(index)) {
               return ElevatedButton(
-                  child: const Icon(Icons.add),
-                  style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(8),
-                  ),
-                  onPressed: () => {
-                    openAddDialog(context, setState)
-                  },
+                child: const Icon(Icons.add),
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(8),
+                ),
+                onPressed: () => {openAddDialog(context, setState)},
               );
-            } else if(isEdgeIndex(index)) {
+            } else if (isEdgeIndex(index)) {
               return null;
             }
             return DraggableMessageNode(
-                message: widget.messages[index - 1],
-                index: index - 1,
-                parentId: widget.parentId,
-                onDelete: () => {
+              message: widget.messages[index - 1],
+              index: index - 1,
+              parentId: widget.parentId,
+              onDelete: () => {
+                setState(() {
+                  widget.messages.removeAt(index - 1);
+                })
+              },
+              onAccept: (MoveNodeEvent event) {
+                print(event.toString());
+                if (event.from.parentId != event.to.parentId) {
+                  widget.onMoveNodeToOtherParent.call(event);
+                } else {
                   setState(() {
-                    widget.messages.removeAt(index -1);
-                  })
-                },
-                onAccept: (MoveNodeEvent event) {
-                  print(event.toString());
-                  if(event.from.parentId != event.to.parentId) {
-                    widget.onMoveNodeToOtherParent.call(event);
-                  } else {
-                    setState(() {
-                      EventNode node = widget.messages.removeAt(event.from.index);
-                      widget.messages.insert(event.to.index, node);
-                    });
-                  }
-                },
+                    EventNode node = widget.messages.removeAt(event.from.index);
+                    widget.messages.insert(event.to.index, node);
+                  });
+                }
+              },
             );
           },
           nodeItemOverlapBuilder: (_, index) =>
-          isEdgeIndex(index) ? true : null,
+              isEdgeIndex(index) ? true : null,
           itemCount: widget.messages.length + 2,
         ),
       ),
@@ -743,81 +842,108 @@ class DraggableMessageNode extends StatefulWidget {
   ExpansionDirection expansionDirection = ExpansionDirection.TOP;
   VoidCallback? doRefresh;
 
-  DraggableMessageNode({Key? key, required this.message, required this.index, required this.parentId, this.onAccept, this.onDelete, this.dragExpansion = 78, this.finished = false}) : super(key: key);
+  DraggableMessageNode(
+      {Key? key,
+      required this.message,
+      required this.index,
+      required this.parentId,
+      this.onAccept,
+      this.onDelete,
+      this.dragExpansion = 78,
+      this.finished = false})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => DraggableMessageNodeState();
 }
 
-class DraggableMessageNodeState extends State<DraggableMessageNode>{
+class DraggableMessageNodeState extends State<DraggableMessageNode> {
   bool timeIsExtended = false;
 
-  Widget? getLeading (bool verySmall) {
-    if(verySmall) {
+  Widget? getLeading(bool verySmall) {
+    if (verySmall) {
       return null;
     }
-    if(widget.message.status == EventStatus.RUNNING) {
-      return Transform.scale(scale: 0.5, child: CircularProgressIndicator(value: widget.message.progress));
-    } else if(widget.message.status == EventStatus.FINISHED) {
-      return const Icon(Icons.check, color: Colors.green,);
+    if (widget.message.status == EventStatus.RUNNING) {
+      return Transform.scale(
+          scale: 0.5,
+          child: CircularProgressIndicator(value: widget.message.progress));
+    } else if (widget.message.status == EventStatus.FINISHED) {
+      return const Icon(
+        Icons.check,
+        color: Colors.green,
+      );
     }
     return null;
   }
 
-  getCard(BuildContext context, {bool dragging = false, bool verySmall = false}) {
+  getCard(BuildContext context,
+      {bool dragging = false, bool verySmall = false}) {
     var currentMessage = widget.message;
     return Card(
       elevation: dragging ? 8.0 : 1.0,
       clipBehavior: Clip.antiAlias,
-      child:
-      Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          currentMessage.displayAsProgressBar() ?
-          LinearProgressIndicator(
-            value: currentMessage.toPercentage(),
-            minHeight: verySmall ? 4 : 8,
-          )
-              :Container(
-            height: verySmall ? 4: 12,
-            decoration: BoxDecoration(
-              color: currentMessage.cardIndicator == CardIndicator.COLOR ? currentMessage.toColor() : null,
-              gradient: currentMessage.cardIndicator == CardIndicator.GRADIENT ? currentMessage.toGradient() : null,
-              boxShadow: [
-                BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withOpacity(.2),
-                    offset: const Offset(0, 0),
-                    blurRadius: 2)
-              ],
-            ),
-          ),
+          currentMessage.displayAsProgressBar()
+              ? LinearProgressIndicator(
+                  value: currentMessage.toPercentage(),
+                  minHeight: verySmall ? 4 : 8,
+                )
+              : Container(
+                  height: verySmall ? 4 : 12,
+                  decoration: BoxDecoration(
+                    color: currentMessage.cardIndicator == CardIndicator.COLOR
+                        ? currentMessage.toColor()
+                        : null,
+                    gradient:
+                        currentMessage.cardIndicator == CardIndicator.GRADIENT
+                            ? currentMessage.toGradient()
+                            : null,
+                    boxShadow: [
+                      BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .shadow
+                              .withOpacity(.2),
+                          offset: const Offset(0, 0),
+                          blurRadius: 2)
+                    ],
+                  ),
+                ),
           ListTile(
             dense: true,
             leading: getLeading(verySmall),
-            title:
-            Text(currentMessage.getTitle(), style: Theme.of(context).textTheme.titleLarge),
+            title: Text(currentMessage.getTitle(),
+                style: Theme.of(context).textTheme.titleLarge),
             isThreeLine: true,
-            subtitle:
-            verySmall ?
-                widget.message.lamps.length == 0 ? const Text("Keine Beschränkungen") : Text("${widget.message.lamps.length} Beschränkungen")
-                :
-            currentMessage.getSubtitle(context, Theme.of(context).textTheme.bodySmall!),
-            trailing: verySmall ? null : Wrap(
-              children: [
-                IconButton(icon: const Icon(Icons.edit), onPressed: () => {
-                  openEditMessage(context, setState)
-                }),
-                IconButton(icon: const Icon(Icons.delete), onPressed: () => {
-                  widget.onDelete?.call()
-                }),
-              ],
-            ),
+            subtitle: verySmall
+                ? widget.message.lamps.length == 0
+                    ? const Text("Keine Beschränkungen")
+                    : Text("${widget.message.lamps.length} Beschränkungen")
+                : currentMessage.getSubtitle(
+                    context, Theme.of(context).textTheme.bodySmall!),
+            trailing: verySmall
+                ? null
+                : Wrap(
+                    children: [
+                      IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () =>
+                              {openEditMessage(context, setState)}),
+                      IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => {widget.onDelete?.call()}),
+                    ],
+                  ),
           ),
-          if(!verySmall && widget.message.hasLamps())...[
+          if (!verySmall && widget.message.hasLamps()) ...[
             const Divider(),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text("Gruppenbeschränkungen", style: Theme.of(context).textTheme.subtitle1),
+              child: Text("Gruppenbeschränkungen",
+                  style: Theme.of(context).textTheme.subtitle1),
             ),
             currentMessage,
             const SizedBox(height: 12),
@@ -847,17 +973,17 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
 
   DragData? willAccept(DragData from) {
     int newIndex;
-    if(from.parentId == widget.parentId) {
-      if(widget.index > from.index) {
+    if (from.parentId == widget.parentId) {
+      if (widget.index > from.index) {
         // When Moving down
-        if(widget.expansionDirection == ExpansionDirection.TOP) {
+        if (widget.expansionDirection == ExpansionDirection.TOP) {
           newIndex = widget.index - 1;
         } else {
           newIndex = widget.index;
         }
       } else {
         // When moving up
-        if(widget.expansionDirection == ExpansionDirection.TOP) {
+        if (widget.expansionDirection == ExpansionDirection.TOP) {
           newIndex = widget.index;
         } else {
           newIndex = widget.index + 1;
@@ -865,33 +991,38 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
       }
     } else {
       // If parent is different, we can just insert it
-      if(widget.expansionDirection == ExpansionDirection.TOP) {
+      if (widget.expansionDirection == ExpansionDirection.TOP) {
         newIndex = widget.index;
       } else {
         newIndex = widget.index + 1;
       }
     }
-    var newPosition = DragData(parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
-    if(from.equals(newPosition)) {
+    var newPosition = DragData(
+        parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
+    if (from.equals(newPosition)) {
       print("Nothing changed");
       return null;
     }
     return newPosition;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return LongPressDraggable<DragData>(
       childWhenDragging: Opacity(opacity: .2, child: getCard(context)),
-      data: DragData(parentId: widget.parentId, index: widget.index, dragType: DragType.NODE),
+      data: DragData(
+          parentId: widget.parentId,
+          index: widget.index,
+          dragType: DragType.NODE),
       child: DragTarget(
         key: key,
-        onMove: (DragTargetDetails<DragData> details)  {
+        onMove: (DragTargetDetails<DragData> details) {
           RenderBox box = key.currentContext?.findRenderObject() as RenderBox;
-          Offset position = box.localToGlobal(Offset.zero); //this is global position
+          Offset position =
+              box.localToGlobal(Offset.zero); //this is global position
           double y = position.dy; //this is y - I think it's what you want
           double height = box.size.height;
-          if(y + height / 2 > details.offset.dy) {
+          if (y + height / 2 > details.offset.dy) {
             setState(() {
               widget.expansionDirection = ExpansionDirection.TOP;
             });
@@ -902,7 +1033,9 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
           }
         },
         onWillAccept: (DragData? data) {
-          if(data?.index == widget.index && data?.parentId == widget.parentId || data?.dragType == DragType.GROUP) {
+          if (data?.index == widget.index &&
+                  data?.parentId == widget.parentId ||
+              data?.dragType == DragType.GROUP) {
             return false;
           }
           setState(() {
@@ -916,10 +1049,10 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
           })
         },
         builder: (
-            BuildContext context,
-            List<dynamic> accepted,
-            List<dynamic> rejected,
-            ) {
+          BuildContext context,
+          List<dynamic> accepted,
+          List<dynamic> rejected,
+        ) {
           return Column(
             children: [
               AnimatedContainer(
@@ -933,8 +1066,8 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
                 ),
               ),
               getCard(context),
-               AnimatedContainer(
-                 width: 200,
+              AnimatedContainer(
+                width: 200,
                 height: isHoveringBottom() ? widget.dragExpansion : 0,
                 duration: const Duration(milliseconds: 100),
                 curve: Curves.ease,
@@ -952,17 +1085,17 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
             // Move
             int newIndex = widget.index;
             // If moving to the same parent, we have to consider that this element is taken out
-            if(data.parentId == widget.parentId) {
-              if(widget.index > data.index) {
+            if (data.parentId == widget.parentId) {
+              if (widget.index > data.index) {
                 // When Moving down
-                if(widget.expansionDirection == ExpansionDirection.TOP) {
+                if (widget.expansionDirection == ExpansionDirection.TOP) {
                   newIndex = widget.index - 1;
                 } else {
                   newIndex = widget.index;
                 }
               } else {
                 // When moving up
-                if(widget.expansionDirection == ExpansionDirection.TOP) {
+                if (widget.expansionDirection == ExpansionDirection.TOP) {
                   newIndex = widget.index;
                 } else {
                   newIndex = widget.index + 1;
@@ -970,22 +1103,22 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
               }
             } else {
               // If parent is different, we can just insert it
-              if(widget.expansionDirection == ExpansionDirection.TOP) {
+              if (widget.expansionDirection == ExpansionDirection.TOP) {
                 newIndex = widget.index;
               } else {
                 newIndex = widget.index + 1;
               }
             }
 
-            var newPosition = DragData(parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
-            if(data.equals(newPosition)) {
+            var newPosition = DragData(
+                parentId: widget.parentId,
+                index: newIndex,
+                dragType: DragType.NODE);
+            if (data.equals(newPosition)) {
               print("Nothing changed");
               return;
             }
-            var event = MoveNodeEvent(
-                from: data,
-                to: newPosition
-            );
+            var event = MoveNodeEvent(from: data, to: newPosition);
             print(event);
             widget.onAccept?.call(event);
           })
@@ -1000,7 +1133,8 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
     );
   }
 
-  Offset myOffset(Draggable<Object> draggable, BuildContext context, Offset position) {
+  Offset myOffset(
+      Draggable<Object> draggable, BuildContext context, Offset position) {
     final RenderBox renderObject = context.findRenderObject()! as RenderBox;
     var pos = renderObject.globalToLocal(position);
     return Offset(pos.dx, widget.dragExpansion / 2);
@@ -1013,101 +1147,119 @@ class DraggableMessageNodeState extends State<DraggableMessageNode>{
     var _currentBrightness = m.message.toPercentage() * 100;
     var _currentColor = m.message.toColor();
     var _animationStore = [];
-    showDialog(context: context, builder: (_) {
-      Persistence().getAnimationStore().then((value) => _animationStore = value);
-      return StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-        return AlertDialog(
-          scrollable: true,
-          title: const Text("Zeitevent ändern"),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TODO Export this into an own fucker
-              RadioListTile<MessageType>(value: MessageType.brightness,
-                  title: const Text("Helligkeit"),
-                  groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}),
-              RadioListTile<MessageType>(value: MessageType.color,
-                  title: const Text("Farbe"),
-                  groupValue: _messageType,
-                  onChanged: (value) => {setState((){ _messageType = value!; })}),
-              /* RadioListTile<MessageType>(value: MessageType.interpolated,
+    showDialog(
+        context: context,
+        builder: (_) {
+          Persistence()
+              .getAnimationStore()
+              .then((value) => _animationStore = value);
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text("Zeitevent ändern"),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // TODO Export this into an own fucker
+                  RadioListTile<MessageType>(
+                      value: MessageType.brightness,
+                      title: const Text("Helligkeit"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  RadioListTile<MessageType>(
+                      value: MessageType.color,
+                      title: const Text("Farbe"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  /* RadioListTile<MessageType>(value: MessageType.interpolated,
                   title: const Text("Animation"),
                   groupValue: _messageType,
                   onChanged: (value) => {setState((){ _messageType = value!; })}), */
-              if(_messageType == MessageType.brightness) ... [
-                Text("Helligkeit bestimmen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                Column(children: [
-                  Slider(
-                    max: 100,
-                    onChangeEnd: (d) => {
+                  if (_messageType == MessageType.brightness) ...[
+                    Text("Helligkeit bestimmen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    Column(
+                      children: [
+                        Slider(
+                          max: 100,
+                          onChangeEnd: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          onChanged: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          value: _currentBrightness,
+                        ),
+                        Text(
+                          "${_currentBrightness.toInt()}%",
+                          style: const TextStyle(fontSize: 32),
+                        )
+                      ],
+                    )
+                  ] else if (_messageType == MessageType.color) ...[
+                    Text("Farbe auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    ColorsWidget(
+                      startColor: _currentColor,
+                      onChanged: (c) => {
+                        setState(() {
+                          _currentColor = c;
+                        })
+                      },
+                    )
+                  ] else if (_messageType == MessageType.interpolated) ...[
+                    Text("Animation aus Liste auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    // Persistence
+                    //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
+                  ]
+                ],
+              ),
+              actions: [
+                TextButton(
+                    child: const Text("Abbrechen"),
+                    onPressed: () => {Navigator.pop(context)}),
+                TextButton(
+                    child: const Text("Ändern"),
+                    onPressed: () {
                       setState(() {
-                        _currentBrightness = d;
-                      }),
-                    },
-                    onChanged: (d) => {
-                      setState(() {
-                        _currentBrightness = d;
-                      }),
-                    },
-                    value: _currentBrightness,
-                  ),
-                  Text("${_currentBrightness.toInt()}%", style: const TextStyle(
-                      fontSize: 32
-                  ),)
-                ],)
-              ]
-              else if(_messageType == MessageType.color) ...[
-                Text("Farbe auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                ColorsWidget(
-                  startColor: _currentColor,
-                  onChanged: (c) => { setState(() {
-                    _currentColor = c;
-                  }) },
-                )
-              ]
-              else if (_messageType == MessageType.interpolated) ...[
-                  Text("Animation aus Liste auswählen".toUpperCase(), style: Theme.of(context).textTheme.overline),
-                  // Persistence
-                  //DropdownButton<String>(items: _animationStore.map((e) => DropdownMenuItem(child: Text(e.title))).toList(), onChanged: (i) => {})
-                ]
-            ],
-          ),
-          actions: [
-            TextButton(
-                child: const Text("Abbrechen"),
-                onPressed: () => {Navigator.pop(context)}),
-            TextButton(
-                child: const Text("Ändern"),
-                onPressed: () {
-                  setState((){
-                    // TODO: Implement factory pattern
-                    IBluetoothMessage? message;
-                    if(_messageType == MessageType.color) {
-                      message = ColorMessage.fromColor(_currentColor);
-                    } else if(_messageType == MessageType.brightness) {
-                      message = BrightnessMessage(_currentBrightness.toInt());
-                    }
-                    if(message == null) {
-                      return;
-                    }
-                    m.onUpdateMessage?.call(message);
-                  });
-                  Future.delayed(Duration.zero, () => {
-                    refresh()
-                  });
-                  refresh();
-                  Navigator.pop(context);
-                })
-          ],
-        );
-      });
-    });
+                        // TODO: Implement factory pattern
+                        IBluetoothMessage? message;
+                        if (_messageType == MessageType.color) {
+                          message = ColorMessage.fromColor(_currentColor);
+                        } else if (_messageType == MessageType.brightness) {
+                          message =
+                              BrightnessMessage(_currentBrightness.toInt());
+                        }
+                        if (message == null) {
+                          return;
+                        }
+                        m.onUpdateMessage?.call(message);
+                      });
+                      Future.delayed(Duration.zero, () => {refresh()});
+                      refresh();
+                      Navigator.pop(context);
+                    })
+              ],
+            );
+          });
+        });
   }
 
   void refresh() {
     setState(() {});
   }
-
 }
-

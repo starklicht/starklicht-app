@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:starklicht_flutter/messages/imessage.dart';
@@ -12,7 +11,6 @@ class FadeMessage extends IBluetoothMessage<FadeMessage> {
   bool ease;
 
   FadeMessage({required this.duration, required this.color, this.ease = true});
-
 
   @override
   List<int> getMessageBody({bool inverse = false}) {
@@ -41,5 +39,4 @@ class FadeMessage extends IBluetoothMessage<FadeMessage> {
     print(body);
     return body;
   }
-
 }

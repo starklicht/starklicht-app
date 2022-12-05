@@ -46,7 +46,7 @@ extension on Color {
 
   Color inverse() {
     var hsv = HSVColor.fromColor(Color.fromARGB(alpha, red, green, blue));
-    if(hsv.hue > 180) {
+    if (hsv.hue > 180) {
       hsv = hsv.withHue(hsv.hue - 180);
     } else {
       hsv = hsv.withHue(hsv.hue + 180);
@@ -78,34 +78,32 @@ class ColorPoint {
 class _ColorPickerWidgetState extends State<ColorPickerWidget> {
   @override
   Widget build(BuildContext context) {
-    return StatefulBuilder(
-      builder: (context, snapshot) {
-        return AlertDialog(
-          scrollable: true,
-          insetPadding: const EdgeInsets.all(16),
-          title: Text("Farbe ändern".i18n),
-          content: SizedBox(
-            width: 500,
-            child: SingleChildScrollView(
-              child: ColorsWidget(
-                  onChanged: (color) => {widget.color = color},
-                  startColor: widget.color),
-            ),
+    return StatefulBuilder(builder: (context, snapshot) {
+      return AlertDialog(
+        scrollable: true,
+        insetPadding: const EdgeInsets.all(16),
+        title: Text("Farbe ändern".i18n),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: ColorsWidget(
+                onChanged: (color) => {widget.color = color},
+                startColor: widget.color),
           ),
-          actions: [
-            TextButton(
-                child: Text("Abbrechen".i18n),
-                onPressed: () => {Navigator.pop(context)}),
-            TextButton(
-                child: Text("Speichern".i18n),
-                onPressed: () {
-                  widget.saveCallback(widget.color);
-                  Navigator.pop(context);
-                })
-          ],
-        );
-      }
-    );
+        ),
+        actions: [
+          TextButton(
+              child: Text("Abbrechen".i18n),
+              onPressed: () => {Navigator.pop(context)}),
+          TextButton(
+              child: Text("Speichern".i18n),
+              onPressed: () {
+                widget.saveCallback(widget.color);
+                Navigator.pop(context);
+              })
+        ],
+      );
+    });
   }
 }
 
@@ -271,56 +269,61 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                const Text("Interpolation:", style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(getAnimationText()),
-                const SizedBox(height: 12),
-                ToggleButtons(
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  children: const <Widget>[
-                    Icon(Icons.horizontal_rule),
-                    Icon(Icons.linear_scale),
-                  ],
-                  isSelected: isSelectedInterpolation,
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < isSelectedInterpolation.length; i++) {
-                        isSelectedInterpolation[i] = false;
-                      }
-                      isSelectedInterpolation[index] = true;
-                      updateCurrentConfig();
-                    });
-                  },
-                ),
-              ],),
+                  const Text("Interpolation:",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(getAnimationText()),
+                  const SizedBox(height: 12),
+                  ToggleButtons(
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    children: const <Widget>[
+                      Icon(Icons.horizontal_rule),
+                      Icon(Icons.linear_scale),
+                    ],
+                    isSelected: isSelectedInterpolation,
+                    onPressed: (int index) {
+                      setState(() {
+                        for (int i = 0;
+                            i < isSelectedInterpolation.length;
+                            i++) {
+                          isSelectedInterpolation[i] = false;
+                        }
+                        isSelectedInterpolation[index] = true;
+                        updateCurrentConfig();
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
             Container(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Zeitfaktor: ".i18n,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(getRepeatText()),
-                const SizedBox(height: 12),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(getRepeatText()),
+                  const SizedBox(height: 12),
                   ToggleButtons(
-                  borderRadius: const BorderRadius.all(Radius.circular(10)),
-                  children: const <Widget>[
-                    Icon(Icons.repeat),
-                    Icon(Icons.swap_horiz),
-                    Icon(Icons.shuffle),
-                    Icon(Icons.looks_one)
-                  ],
-                  isSelected: isSelected,
-                  onPressed: (int index) {
-                    setState(() {
-                      for (int i = 0; i < isSelected.length; i++) {
-                        isSelected[i] = false;
-                      }
-                      isSelected[index] = true;
-                      updateCurrentConfig();
-                    });
-                  },
-                )
-              ],),
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    children: const <Widget>[
+                      Icon(Icons.repeat),
+                      Icon(Icons.swap_horiz),
+                      Icon(Icons.shuffle),
+                      Icon(Icons.looks_one)
+                    ],
+                    isSelected: isSelected,
+                    onPressed: (int index) {
+                      setState(() {
+                        for (int i = 0; i < isSelected.length; i++) {
+                          isSelected[i] = false;
+                        }
+                        isSelected[index] = true;
+                        updateCurrentConfig();
+                      });
+                    },
+                  )
+                ],
+              ),
             ),
           ],
         ),
@@ -332,7 +335,13 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
           Row(children: [
             Text("Dauer: ".i18n,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            TextButton(onPressed: () => {setState(() { collapseTimeSelection = !collapseTimeSelection; })},child: Text(formatTime()))
+            TextButton(
+                onPressed: () => {
+                      setState(() {
+                        collapseTimeSelection = !collapseTimeSelection;
+                      })
+                    },
+                child: Text(formatTime()))
           ]),
           AnimatedContainer(
               duration: const Duration(milliseconds: 300),
@@ -349,10 +358,14 @@ class _AnimationSettingsWidgetState extends State<AnimationSettings>
                         _currentMillis = value.inMilliseconds.remainder(1000);
                       }),
                       updateCurrentConfig()
-                    }, startDuration: Duration(minutes: _currentMinutes.toInt(), seconds: _currentSeconds.toInt(), milliseconds: _currentMillis.toInt()),),
+                    },
+                    startDuration: Duration(
+                        minutes: _currentMinutes.toInt(),
+                        seconds: _currentSeconds.toInt(),
+                        milliseconds: _currentMillis.toInt()),
+                  ),
                 ),
-              )
-          )
+              ))
         ]),
       )
     ]);
@@ -470,7 +483,15 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double getCanvasPosition(double pointPos) {
-    return map(pointPos,(-boundingBoxSize + circleRadius) / 2 + getCurrentContainerPosition().dx, (getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2) + getCurrentContainerPosition().dx, 0, 1);
+    return map(
+        pointPos,
+        (-boundingBoxSize + circleRadius) / 2 +
+            getCurrentContainerPosition().dx,
+        (getCurrentContainerSize().width -
+                (boundingBoxSize + circleRadius) / 2) +
+            getCurrentContainerPosition().dx,
+        0,
+        1);
   }
 
   Offset getCurrentContainerPosition() {
@@ -513,11 +534,13 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   }
 
   double getPointPosition(double pos) {
-    return map(pos, 0, 1, (-boundingBoxSize + circleRadius) / 2, getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2);
+    return map(pos, 0, 1, (-boundingBoxSize + circleRadius) / 2,
+        getCurrentContainerSize().width - (boundingBoxSize + circleRadius) / 2);
   }
 
   void addPoint(double globalPositionX) {
-    var position = constrain(getCanvasPosition(globalPositionX - boundingBoxSize / 2));
+    var position =
+        constrain(getCanvasPosition(globalPositionX - boundingBoxSize / 2));
     var color = getPointColor(position);
     var point = ColorPoint(color, position);
     setState(() {
@@ -548,14 +571,16 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
   Offset _currentOffset = const Offset(0, 0);
 
   void _getWidgetInfo(_) {
-    final RenderBox renderBox = _widgetKey.currentContext?.findRenderObject() as RenderBox;
+    final RenderBox renderBox =
+        _widgetKey.currentContext?.findRenderObject() as RenderBox;
 
     final Size size = renderBox.size; // or _widgetKey.currentContext?.size
     print('Size: ${size.width}, ${size.height}');
 
     final Offset offset = renderBox.localToGlobal(Offset.zero);
     print('Offset: ${offset.dx}, ${offset.dy}');
-    print('Position: ${(offset.dx + size.width) / 2}, ${(offset.dy + size.height) / 2}');
+    print(
+        'Position: ${(offset.dx + size.width) / 2}, ${(offset.dy + size.height) / 2}');
     setState(() {
       _currentSize = renderBox.size;
       _currentOffset = offset;
@@ -595,11 +620,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
     // TODO: implement build
     return Column(children: [
       Padding(
-        padding: const EdgeInsets.only(left:8.0, right: 8.0),
-        child: Stack(
-          key: _widgetKey,
-          clipBehavior: Clip.none,
-            children: [
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        child: Stack(key: _widgetKey, clipBehavior: Clip.none, children: [
           GestureDetector(
               onTapUp: (e) => {addPoint(e.globalPosition.dx)},
               child: Container(
@@ -610,8 +632,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                     gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors:
-                            List.from(widget.gradient.colors.map((e) => e.color)),
+                        colors: List.from(
+                            widget.gradient.colors.map((e) => e.color)),
                         stops: List.from(
                             widget.gradient.colors.map((e) => e.point))),
                     borderRadius: const BorderRadius.all(Radius.circular(4)),
@@ -637,8 +659,8 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                             context: context,
                             builder: (_) {
                               return ColorPickerWidget(
-                                  color:
-                                      widget.gradient.colors[_activeIndex!].color,
+                                  color: widget
+                                      .gradient.colors[_activeIndex!].color,
                                   saveCallback: updateColor);
                             });
                       }
@@ -662,19 +684,24 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                         color: Colors.transparent,
                         height: boundingBoxSize,
                         child: Container(
-                            width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                            height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
+                            width: currentIndex == _activeIndex
+                                ? circleActiveRadius
+                                : circleRadius,
+                            height: currentIndex == _activeIndex
+                                ? circleActiveRadius
+                                : circleRadius,
                             decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: e.color,
-                                border: Border.all(color: Colors.white, width: 3),
+                                border:
+                                    Border.all(color: Colors.white, width: 3),
                                 boxShadow: const [
                                   BoxShadow(
                                     color: Colors.black,
                                     blurRadius: 0.0,
                                     spreadRadius: 1.0,
-                                    offset: Offset(0,
-                                        0), // shadow direction: bottom right
+                                    offset: Offset(
+                                        0, 0), // shadow direction: bottom right
                                   )
                                 ])))),
                 feedback: Container(
@@ -683,26 +710,30 @@ class _GradientEditorWidgetState extends State<GradientEditorWidget> {
                     color: Colors.transparent,
                     height: boundingBoxSize,
                     child: Container(
-                    width: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                    height: currentIndex == _activeIndex ? circleActiveRadius : circleRadius,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: e.color,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Colors.black,
-                              blurRadius: 1.0,
-                              spreadRadius: 1.0,
-                              offset: Offset(0,
-                                  0),  // shadow direction: bottom right
-                          )
-                        ]))),
+                        width: currentIndex == _activeIndex
+                            ? circleActiveRadius
+                            : circleRadius,
+                        height: currentIndex == _activeIndex
+                            ? circleActiveRadius
+                            : circleRadius,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: e.color,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black,
+                                blurRadius: 1.0,
+                                spreadRadius: 1.0,
+                                offset: Offset(
+                                    0, 0), // shadow direction: bottom right
+                              )
+                            ]))),
                 childWhenDragging: Container(),
                 axis: Axis.horizontal,
                 onDragEnd: (d) => onDragEnd(d.offset.dx, currentIndex),
-                onDragStarted: ()  {
+                onDragStarted: () {
                   setState(() {
                     _activeIndex = currentIndex;
                   });
@@ -805,19 +836,17 @@ class AnimationPreviewWidget extends StatefulWidget {
   RestartController? restartController;
 
   AnimationPreviewWidget(
-      {
-        Key? key,
-        required this.settings,
-        required this.colors,
-        this.callback,
-        required this.restartCallback,
-        required this.notify,
-        required this.isEditorPreview,
-        required this.onAnimationsValidChanged,
-        this.onAnimationChanged,
-        this.title,
-        this.restartController
-      })
+      {Key? key,
+      required this.settings,
+      required this.colors,
+      this.callback,
+      required this.restartCallback,
+      required this.notify,
+      required this.isEditorPreview,
+      required this.onAnimationsValidChanged,
+      this.onAnimationChanged,
+      this.title,
+      this.restartController})
       : super(key: key);
 
   @override
@@ -855,13 +884,9 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
 
   void updateAnimationCallbackAndSend() {
     updateAnimationCallback();
-    widget.onAnimationChanged?.call(
-      AnimationMessage(
-        widget.colors.colors,
-        widget.settings,
-        title: widget.title
-      )
-    );
+    widget.onAnimationChanged?.call(AnimationMessage(
+        widget.colors.colors, widget.settings,
+        title: widget.title));
     for (var element in widget.notify) {
       element.call();
     }
@@ -873,7 +898,10 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       Persistence().saveEditorAnimation(
           AnimationMessage(widget.colors.colors, widget.settings));
     }
-    if (widget.settings.seconds + widget.settings.millis + widget.settings.minutes == 0) {
+    if (widget.settings.seconds +
+            widget.settings.millis +
+            widget.settings.minutes ==
+        0) {
       setState(() {
         isAnimationValid = false;
       });
@@ -884,7 +912,9 @@ class _AnimationPreviewWidgetState extends State<AnimationPreviewWidget>
       isAnimationValid = true;
     });
     controller.duration = Duration(
-        minutes: widget.settings.minutes, seconds: widget.settings.seconds, milliseconds: widget.settings.millis);
+        minutes: widget.settings.minutes,
+        seconds: widget.settings.seconds,
+        milliseconds: widget.settings.millis);
     if (widget.settings.interpolationType == InterpolationType.linear) {
       colorAnimation = BaseColorAnimation(widget.colors.colors,
               widget.settings.timefactor == TimeFactor.shuffle)
@@ -941,7 +971,9 @@ class _AnimationTaskbarWidgetState extends State<AnimationTaskbarWidget> {
   }
 
   bool errorState() {
-    return widget.settings.seconds == 0 && widget.settings.millis == 0 && widget.settings.minutes == 0;
+    return widget.settings.seconds == 0 &&
+        widget.settings.millis == 0 &&
+        widget.settings.minutes == 0;
   }
 
   @override
@@ -1049,9 +1081,9 @@ class _SaveWidgetState extends State<SaveWidget> {
                               builder: (_) {
                                 return AlertDialog(
                                   title: Text(
-                                      'Animation "%s" existiert bereits. Überschreiben?'.i18n.fill([
-                                        widget.animation.title!
-                                      ])),
+                                      'Animation "%s" existiert bereits. Überschreiben?'
+                                          .i18n
+                                          .fill([widget.animation.title!])),
                                   actions: [
                                     TextButton(
                                         onPressed: () =>
@@ -1065,7 +1097,11 @@ class _SaveWidgetState extends State<SaveWidget> {
                                               .saveAnimation(widget.animation);
                                           var snackBar = SnackBar(
                                             content: Text(
-                                                'Animation "%s" wurde überschrieben'.i18n.fill([widget.animation.title!])),
+                                                'Animation "%s" wurde überschrieben'
+                                                    .i18n
+                                                    .fill([
+                                              widget.animation.title!
+                                            ])),
                                           );
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(snackBar);
@@ -1077,8 +1113,9 @@ class _SaveWidgetState extends State<SaveWidget> {
                         } else {
                           Persistence().saveAnimation(widget.animation);
                           var snackBar = SnackBar(
-                            content: Text(
-                                'Animation "%s" wurde gespeichert'.i18n.fill([widget.animation.title!])),
+                            content: Text('Animation "%s" wurde gespeichert'
+                                .i18n
+                                .fill([widget.animation.title!])),
                           );
                           ScaffoldMessenger.of(context).showSnackBar(snackBar);
                           Navigator.pop(context);
@@ -1110,7 +1147,16 @@ class AnimationsEditorWidget extends StatefulWidget {
   AnimationMessage? animation;
   bool isScaffold;
   bool showSendingOptions;
-  AnimationsEditorWidget({Key? key, this.animationsController, required this.onAnimationsValidChanged, this.isScaffold = false, this.animation, this.onAnimationChanged, this.persistChanges = false, this.showSendingOptions = true}) : super(key: key);
+  AnimationsEditorWidget(
+      {Key? key,
+      this.animationsController,
+      required this.onAnimationsValidChanged,
+      this.isScaffold = false,
+      this.animation,
+      this.onAnimationChanged,
+      this.persistChanges = false,
+      this.showSendingOptions = true})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _AnimationsEditorWidgetState();
@@ -1127,13 +1173,12 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   @override
   void initState() {
     super.initState();
-    if(widget.animation != null) {
+    if (widget.animation != null) {
       setState(() {
         settings = widget.animation!.config;
         gradient = GradientSettingsConfig(widget.animation!.colors);
       });
-    }
-    else {
+    } else {
       Persistence().getEditorAnimation().then((value) {
         setState(() {
           settings = value.config;
@@ -1147,8 +1192,7 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
   }
 
   void send() {
-    controller
-        .broadcast(AnimationMessage(gradient!.colors, settings!));
+    controller.broadcast(AnimationMessage(gradient!.colors, settings!));
   }
 
   void save() {
@@ -1157,7 +1201,7 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
         builder: (_) {
           return SaveWidget(
               animation: AnimationMessage(gradient!.colors, settings!));
-      });
+        });
   }
 
   bool loading() {
@@ -1176,55 +1220,53 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              CircularProgressIndicator(),
-            ],
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                CircularProgressIndicator(),
+              ],
             ),
             const Padding(
               padding: EdgeInsets.only(top: 16.0),
               child: Text("Wird geladen..."),
             )
-          ]
-      );
+          ]);
     } else {
       return SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: widget.isScaffold ? 140 : 0, top: 8),
+          padding: EdgeInsets.only(bottom: widget.isScaffold ? 140 : 0, top: 8),
           child: Column(children: [
-        Text(
-          "Zeitverlauf\n".i18n,
-          textAlign: TextAlign.start,
-        ),
-        GradientEditorWidget(gradient: gradient!, callback: callback),
-        const Divider(height: 32),
-        Text(
-          "Animationseinstellungen".i18n,
-          textAlign: TextAlign.start,
-        ),
-        AnimationSettings(settings: settings!, callback: callback),
-        const Divider(height: 32),
-        Text("Animationsvorschau".i18n),
-        const SizedBox(height: 12),
-        AnimationPreviewWidget(
-            onAnimationsValidChanged: widget.onAnimationsValidChanged,
-            settings: settings!,
-            colors: gradient!,
-            callback: callback,
-            restartCallback: restartCallback,
-            notify: notifyChanges,
-            isEditorPreview: widget.persistChanges,
-            onAnimationChanged: widget.onAnimationChanged,
-            title: widget.animation?.title
-        ),
-        if(widget.showSendingOptions)...[
-          const Divider(height: 32),
-          Text("Einstellungen".i18n),
-          const SizedBox(height: 12),
-          AnimationTaskbarWidget(
-              settings: settings!, colors: gradient!, notify: notifyChanges)
-        ]
-      ]));
+            Text(
+              "Zeitverlauf\n".i18n,
+              textAlign: TextAlign.start,
+            ),
+            GradientEditorWidget(gradient: gradient!, callback: callback),
+            const Divider(height: 32),
+            Text(
+              "Animationseinstellungen".i18n,
+              textAlign: TextAlign.start,
+            ),
+            AnimationSettings(settings: settings!, callback: callback),
+            const Divider(height: 32),
+            Text("Animationsvorschau".i18n),
+            const SizedBox(height: 12),
+            AnimationPreviewWidget(
+                onAnimationsValidChanged: widget.onAnimationsValidChanged,
+                settings: settings!,
+                colors: gradient!,
+                callback: callback,
+                restartCallback: restartCallback,
+                notify: notifyChanges,
+                isEditorPreview: widget.persistChanges,
+                onAnimationChanged: widget.onAnimationChanged,
+                title: widget.animation?.title),
+            if (widget.showSendingOptions) ...[
+              const Divider(height: 32),
+              Text("Einstellungen".i18n),
+              const SizedBox(height: 12),
+              AnimationTaskbarWidget(
+                  settings: settings!, colors: gradient!, notify: notifyChanges)
+            ]
+          ]));
     }
   }
 }
@@ -1241,7 +1283,8 @@ class AnimationEventsController {
   Function? send;
 }
 
-class _AnimationsEditorWidgetScaffoldState extends State<AnimationsEditorScaffoldWidget> {
+class _AnimationsEditorWidgetScaffoldState
+    extends State<AnimationsEditorScaffoldWidget> {
   final AnimationEventsController controller = AnimationEventsController();
   bool animationValid = true;
   @override
@@ -1252,43 +1295,35 @@ class _AnimationsEditorWidgetScaffoldState extends State<AnimationsEditorScaffol
             isScaffold: true,
             animationsController: controller,
             onAnimationsValidChanged: (valid) => {
-              Future.delayed(Duration.zero, () async {
-                if(animationValid != valid) {
-                  setState(() {
-                    animationValid = valid;
-                  });
-                }
-              })
-            }
-        ),
-        floatingActionButton:
-        animationValid ? Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FloatingActionButton(
-                child: const Icon(
-                    Icons.settings_remote
+                  Future.delayed(Duration.zero, () async {
+                    if (animationValid != valid) {
+                      setState(() {
+                        animationValid = valid;
+                      });
+                    }
+                  })
+                }),
+        floatingActionButton: animationValid
+            ? Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                FloatingActionButton(
+                  child: const Icon(Icons.settings_remote),
+                  onPressed: !animationValid
+                      ? null
+                      : () {
+                          controller.send?.call();
+                        },
+                  heroTag: null,
                 ),
-                onPressed: !animationValid ? null : () {
-                  controller.send?.call();
-                },
-                heroTag: null,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              FloatingActionButton(
-                child: const Icon(
-                    Icons.save
+                const SizedBox(
+                  height: 10,
                 ),
-                onPressed: !animationValid ? null : () => {
-                  controller.save?.call()
-                },
-                heroTag: null,
-              )
-            ]
-        ) : null
-    );
+                FloatingActionButton(
+                  child: const Icon(Icons.save),
+                  onPressed:
+                      !animationValid ? null : () => {controller.save?.call()},
+                  heroTag: null,
+                )
+              ])
+            : null);
   }
-
 }

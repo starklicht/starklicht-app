@@ -12,18 +12,16 @@ class BrightnessMessage extends IBluetoothMessage<int> {
   BrightnessMessage(this.brightness);
 
   @override
-  List<int> getMessageBody({ bool inverse = false }) {
-    return [
-      brightness
-    ];
+  List<int> getMessageBody({bool inverse = false}) {
+    return [brightness];
   }
 
   @override
   void setValue(int value) {
     brightness = value;
-    if(brightness > 100) {
+    if (brightness > 100) {
       brightness = 100;
-    } else if(brightness < 0) {
+    } else if (brightness < 0) {
       brightness = 0;
     }
   }
@@ -56,9 +54,7 @@ class BrightnessMessage extends IBluetoothMessage<int> {
   Map<String, dynamic> toJson() {
     return {
       "type": messageType.name,
-      "data": {
-        "brightness": brightness
-      }
+      "data": {"brightness": brightness}
     };
   }
 }

@@ -6,12 +6,20 @@ import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.da
 import 'package:starklicht_flutter/model/orchestra.dart';
 
 enum MessageType {
-  color, interpolated, request, onoff, poti, brightness, save, clear, fade
+  color,
+  interpolated,
+  request,
+  onoff,
+  poti,
+  brightness,
+  save,
+  clear,
+  fade
 }
 
 extension MessageTypeExtension on MessageType {
   int get id {
-    switch(this) {
+    switch (this) {
       case MessageType.color:
         return 0;
       case MessageType.interpolated:
@@ -48,10 +56,10 @@ abstract class IBluetoothMessage<T> {
 
   static const List<int> endOfMessageSign = [escapeChar, endChar];
 
-  List<int> getMessageBody({ bool inverse = false });
+  List<int> getMessageBody({bool inverse = false});
 
   List<int> escape(int character) {
-    return character == escapeChar?[escapeChar, character]:[character];
+    return character == escapeChar ? [escapeChar, character] : [character];
   }
 
   List<int> escapeList(List<int> message) {
@@ -62,8 +70,9 @@ abstract class IBluetoothMessage<T> {
     return buffer;
   }
 
-  Future<void> send(BluetoothCharacteristic c, StarklichtBluetoothOptions options) async {
-    if(!options.active) {
+  Future<void> send(
+      BluetoothCharacteristic c, StarklichtBluetoothOptions options) async {
+    if (!options.active) {
       return;
     }
     // Build Message: ID - BODY - END-OF-MESSAGE-SIGN
@@ -71,23 +80,35 @@ abstract class IBluetoothMessage<T> {
     message.addAll(escapeList(getMessageBody(inverse: options.inverse)));
     message.addAll(endOfMessageSign);
     // Send to Device!
-    if(Platform.isIOS) {
+    if (Platform.isIOS) {
       // Split the messages in ios
-      if(!options.delay || options.delayTimeMillis == 0) {
+      if (!options.delay || options.delayTimeMillis == 0) {
         int chunkSize = 20;
         for (var i = 0; i < message.length; i += chunkSize) {
-          c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
+          c.write(
+              message.sublist(
+                  i,
+                  i + chunkSize > message.length
+                      ? message.length
+                      : i + chunkSize),
+              withoutResponse: true);
         }
       } else {
         Future.delayed(Duration(milliseconds: options.delayTimeMillis), () {
           int chunkSize = 20;
           for (var i = 0; i < message.length; i += chunkSize) {
-            c.write(message.sublist(i, i+chunkSize > message.length ? message.length : i + chunkSize), withoutResponse: true);
+            c.write(
+                message.sublist(
+                    i,
+                    i + chunkSize > message.length
+                        ? message.length
+                        : i + chunkSize),
+                withoutResponse: true);
           }
         });
       }
     } else {
-      if(!options.delay || options.delayTimeMillis == 0) {
+      if (!options.delay || options.delayTimeMillis == 0) {
         return c.write(message, withoutResponse: withoutResponse);
       } else {
         Future.delayed(Duration(milliseconds: options.delayTimeMillis), () {
@@ -124,10 +145,7 @@ abstract class IBluetoothMessage<T> {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      "type": messageType.name,
-      "data": dataToJson()
-    };
+    return {"type": messageType.name, "data": dataToJson()};
   }
 
   /* void broadcast(List<BluetoothCharacteristic> broadcastList) async {

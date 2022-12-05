@@ -36,23 +36,17 @@ class AnimationMessageFactory extends IMessageFactory<AnimationMessage> {
     var json = jsonDecode(params)['data'];
     print("_---------------------");
     print(json);
-    var colors = (json['colors'] as List<dynamic>).map((e) => ColorPoint(
-        Color(e['color'] as int),
-        e['point'] as double
-    )).toList();
+    var colors = (json['colors'] as List<dynamic>)
+        .map((e) => ColorPoint(Color(e['color'] as int), e['point'] as double))
+        .toList();
     var animationSettings = AnimationSettingsConfig(
-      // InterpolationType.linear,
-      // TimeFactor.repeat,
+        // InterpolationType.linear,
+        // TimeFactor.repeat,
         InterpolationType.values[json['config']['interpolationType'] as int],
         TimeFactor.values[json['config']['timeFactor'] as int],
         json['config']['minutes'] as int? ?? 0,
         json['config']['seconds'] as int,
-        json['config']['millis'] as int
-    );
-    return AnimationMessage(
-        colors,
-        animationSettings,
-        title: json['title']
-    );
+        json['config']['millis'] as int);
+    return AnimationMessage(colors, animationSettings, title: json['title']);
   }
 }

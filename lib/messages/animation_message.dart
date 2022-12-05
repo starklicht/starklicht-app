@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
@@ -10,7 +9,7 @@ import 'imessage.dart';
 extension on Color {
   Color inverse() {
     var hsv = HSVColor.fromColor(Color.fromARGB(alpha, red, green, blue));
-    if(hsv.hue > 180) {
+    if (hsv.hue > 180) {
       hsv = hsv.withHue(hsv.hue - 180);
     } else {
       hsv = hsv.withHue(hsv.hue + 180);
@@ -31,16 +30,19 @@ class AnimationMessage extends IBluetoothMessage {
   @override
   CardIndicator get indicator => CardIndicator.GRADIENT;
 
-  AnimationMessage(this._colors, this._config, { this.title });
+  AnimationMessage(this._colors, this._config, {this.title});
 
   static AnimationMessage buildDefault() {
-    return AnimationMessage([ColorPoint(Colors.white, 0), ColorPoint(Colors.black, 1)], AnimationSettingsConfig(
-      InterpolationType.linear,
-      TimeFactor.repeat,
-      0,
-      1,
-      0,
-    ), title: "Kleiner Test");
+    return AnimationMessage(
+        [ColorPoint(Colors.white, 0), ColorPoint(Colors.black, 1)],
+        AnimationSettingsConfig(
+          InterpolationType.linear,
+          TimeFactor.repeat,
+          0,
+          1,
+          0,
+        ),
+        title: "Kleiner Test");
   }
 
   @override
@@ -48,10 +50,8 @@ class AnimationMessage extends IBluetoothMessage {
     return LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors:
-        List.from(_colors.map((e) => e.color)),
-        stops: List.from(
-        _colors.map((e) => e.point)));
+        colors: List.from(_colors.map((e) => e.color)),
+        stops: List.from(_colors.map((e) => e.point)));
   }
 
   @override
@@ -61,8 +61,8 @@ class AnimationMessage extends IBluetoothMessage {
   bool get isGradient => true;
 
   @override
-  List<int> getMessageBody({ bool inverse = false }) {
-    if(_config.seconds == 0 && _config.millis == 0 && _config.minutes == 0) {
+  List<int> getMessageBody({bool inverse = false}) {
+    if (_config.seconds == 0 && _config.millis == 0 && _config.minutes == 0) {
       throw Exception("Time is 0!");
     }
     var b = [
@@ -70,7 +70,11 @@ class AnimationMessage extends IBluetoothMessage {
       _colors.length,
       buildInterpolationType(),
       // Is Restart
-      _config.timefactor==TimeFactor.pingpong?1:_config.timefactor==TimeFactor.once?2:0,
+      _config.timefactor == TimeFactor.pingpong
+          ? 1
+          : _config.timefactor == TimeFactor.once
+              ? 2
+              : 0,
       // Integrate Seamlessly
       0,
       // MINUTES!
@@ -93,22 +97,22 @@ class AnimationMessage extends IBluetoothMessage {
 
   @override
   String retrieveText() {
-    if(title == null) {
+    if (title == null) {
       return "Unbenannt";
     }
     return title!;
   }
 
   int buildInterpolationType() {
-    switch(_config.interpolationType) {
+    switch (_config.interpolationType) {
       case InterpolationType.linear:
-        if(_config.timefactor == TimeFactor.shuffle) {
+        if (_config.timefactor == TimeFactor.shuffle) {
           return 2;
         } else {
           return 0;
         }
       case InterpolationType.constant:
-        if(_config.timefactor == TimeFactor.shuffle) {
+        if (_config.timefactor == TimeFactor.shuffle) {
           return 3;
         } else {
           return 1;
@@ -121,7 +125,7 @@ class AnimationMessage extends IBluetoothMessage {
     for (var c in _colors) {
       var col = Color.fromARGB(255, c.color.red, c.color.green, c.color.blue);
       l.add((c.point * 255).round());
-      if(inverse) {
+      if (inverse) {
         col = col.inverse();
       }
       l.add((col.red));
@@ -147,14 +151,8 @@ class AnimationMessage extends IBluetoothMessage {
   AnimationMessage copy() {
     return AnimationMessage(
         _colors.map((e) => ColorPoint(e.color, e.point)).toList(),
-        AnimationSettingsConfig(
-            _config.interpolationType,
-            _config.timefactor,
-            _config.minutes,
-            _config.seconds,
-            _config.millis
-        ),
-        title: title
-    );
+        AnimationSettingsConfig(_config.interpolationType, _config.timefactor,
+            _config.minutes, _config.seconds, _config.millis),
+        title: title);
   }
 }

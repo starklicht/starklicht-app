@@ -1,7 +1,3 @@
-enum InterpolationType {
-  linear, constant
-}
+enum InterpolationType { linear, constant }
 
-enum TimeFactor {
-  repeat, pingpong, shuffle, once
-}
+enum TimeFactor { repeat, pingpong, shuffle, once }

@@ -17,12 +17,10 @@ class BaseColorAnimation extends Animatable<Color?> {
     nextValue = _random.nextDouble();
   }
 
-
   sort() {
     _points.sort((a, b) => a.point.compareTo(b.point));
     print(_points.map((e) => e.point));
   }
-
 
   set points(List<ColorPoint> value) {
     _points = value;
@@ -37,9 +35,9 @@ class BaseColorAnimation extends Animatable<Color?> {
   Color? gradientScale(double t) {
     var leftSelect = selectLeft(t);
     var rightSelect = selectRight(t);
-    if(leftSelect.isEmpty) {
+    if (leftSelect.isEmpty) {
       return rightSelect[0].color;
-    } else if(rightSelect.isEmpty) {
+    } else if (rightSelect.isEmpty) {
       return leftSelect[0].color;
     }
     ColorPoint leftTween = leftSelect[0];
@@ -61,9 +59,8 @@ class BaseColorAnimation extends Animatable<Color?> {
     return r;
   }
 
-
   double interpolate(double t) {
-    if(_randomize) {
+    if (_randomize) {
       if (t < lastTime) {
         lastValue = nextValue;
         nextValue = _random.nextDouble();
@@ -79,12 +76,14 @@ class BaseColorAnimation extends Animatable<Color?> {
     return gradientScale(interpolate(t));
   }
 }
+
 class ConstantColorAnimator extends BaseColorAnimation {
-  ConstantColorAnimator(List<ColorPoint> points, bool randomize) : super(points, randomize);
+  ConstantColorAnimator(List<ColorPoint> points, bool randomize)
+      : super(points, randomize);
 
   @override
   double interpolate(double t) {
-    if(_randomize) {
+    if (_randomize) {
       if (t < lastTime) {
         nextValue = _random.nextDouble();
       }
@@ -93,9 +92,9 @@ class ConstantColorAnimator extends BaseColorAnimation {
     }
     var l = selectLeft(t);
     var r = selectRight(t);
-    if(l.isEmpty) {
+    if (l.isEmpty) {
       return r[0].point;
-    } else if(r.isEmpty) {
+    } else if (r.isEmpty) {
       return l[0].point;
     }
     var m = [l[0], r[0]];

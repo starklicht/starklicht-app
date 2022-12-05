@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'orchestra_timeline_view.dart';
@@ -26,96 +25,94 @@ class OrchestraListView extends StatefulWidget {
   VoidCallback? play;
   bool isPlaying = false;
 
-  OrchestraTimeline orchestra = OrchestraTimeline(
-  );
+  OrchestraTimeline orchestra = OrchestraTimeline();
 }
 
 class OrchestraLiveViewState extends State<OrchestraListView> {
-
-
-
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      itemCount: widget.animations.length,
-      itemBuilder: (BuildContext context, int index) {
-        return Card(
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-          child: InkWell(
-            onTap: () => {
-              showDialog(context: context, builder: (_) {
-                return AlertDialog(
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  insetPadding: const EdgeInsets.all(16),
-                  contentPadding: const EdgeInsets.all(16),
-                  title: Text(widget.animations[index]),
-                  content: SizedBox(
-                    height: 20000,
-                    width: 2000,
-                    child: widget.orchestra
+        itemCount: widget.animations.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Card(
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12))),
+            child: InkWell(
+              onTap: () => {
+                showDialog(
+                    context: context,
+                    builder: (_) {
+                      return AlertDialog(
+                        backgroundColor:
+                            Theme.of(context).scaffoldBackgroundColor,
+                        insetPadding: const EdgeInsets.all(16),
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text(widget.animations[index]),
+                        content: SizedBox(
+                            height: 20000,
+                            width: 2000,
+                            child: widget.orchestra),
+                        actions: [
+                          IconButton(
+                              onPressed: () {
+                                print(widget.orchestra.nodes[0].events.length);
+                                setState(() {
+                                  widget.isPlaying = true;
+                                });
+                                widget.orchestra.play?.call();
+                              },
+                              icon: widget.isPlaying
+                                  ? const Icon(Icons.stop)
+                                  : const Icon(Icons.play_arrow)),
+                          TextButton(
+                              onPressed: () => {Navigator.pop(context)},
+                              child: const Text("Abbrechen")),
+                          TextButton(
+                              onPressed: () => {Navigator.pop(context)},
+                              child: const Text("Speichern"))
+                        ],
+                      );
+                    })
+              },
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(18),
+                title: Text(widget.animations[index],
+                    style: Theme.of(context).textTheme.headline5),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        children: const [
+                          Icon(Icons.access_time, size: 16),
+                          Text(" 5 Minuten "),
+                          Icon(Icons.list_alt, size: 16),
+                          Text(" 3 Effekte "),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(runSpacing: 4, spacing: 4, children: [
+                        const Chip(label: Text("Kurzfilm")),
+                        Chip(label: Text("Szene $index"))
+                      ])
+                    ],
                   ),
-                  actions: [
-                    IconButton(onPressed: () {
-                      print(widget.orchestra.nodes[0].events.length);
-                      setState(() {
-                        widget.isPlaying = true;
-                      });
-                      widget.orchestra.play?.call();
-                    }, icon: widget.isPlaying ? const Icon(Icons.stop) : const Icon(Icons.play_arrow)),
-                    TextButton(onPressed: () => {
-                      Navigator.pop(context)
-                    }, child: const Text("Abbrechen")),
-                    TextButton(onPressed: () => {
-                      Navigator.pop(context)
-                    }, child: const Text("Speichern"))
-                  ],
-                );
-              })
-            },
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(18),
-              title: Text(widget.animations[index], style: Theme.of(context).textTheme.headline5),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      children: const [
-                        Icon(Icons.access_time, size: 16),
-                        Text(" 5 Minuten "),
-                        Icon(Icons.list_alt, size: 16),
-                        Text(" 3 Effekte "),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                        runSpacing: 4,
-                        spacing: 4,
-                        children:
-                    [
-                      const Chip(label: Text("Kurzfilm")),
-                      Chip(label: Text("Szene $index"))
-                    ]
-                      )
-                  ],
                 ),
               ),
             ),
-          ),
-        );
-      }
-    );
+          );
+        });
   }
 
   @override
   void initState() {
     super.initState();
     widget.orchestra.onFinishPlay = () => {
-      setState(() {
-        print("Setting ");
-        widget.isPlaying = false;
-      })
-    };
+          setState(() {
+            print("Setting ");
+            widget.isPlaying = false;
+          })
+        };
   }
 }

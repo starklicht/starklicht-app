@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'package:collection/src/iterable_extensions.dart';
 
@@ -12,26 +11,25 @@ import '../controller/starklicht_bluetooth_controller.dart';
 import '../messages/color_message.dart';
 import '../view/orchestra_timeline_view.dart';
 
+enum NodeType { NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT }
 
-enum NodeType {
-  NOT_DEFINED, TIME, REPEAT, MESSAGE, WAIT
-}
-
-enum WaitType {
-  NONE, TIME, USER_INPUT
-}
+enum WaitType { NONE, TIME, USER_INPUT }
 
 abstract class INode extends StatefulWidget {
   INode({Key? key}) : super(key: key);
   abstract NodeType type;
 }
 
-enum CardIndicator {
-  COLOR, GRADIENT, PROGRESS
-}
+enum CardIndicator { COLOR, GRADIENT, PROGRESS }
 
 abstract class EventNode extends INode {
-  EventNode({Key? key, update, onDelete, required this.waitForUserInput, required this.delay}) : super(key: key);
+  EventNode(
+      {Key? key,
+      update,
+      onDelete,
+      required this.waitForUserInput,
+      required this.delay})
+      : super(key: key);
 
   CardIndicator get cardIndicator;
 
@@ -63,19 +61,19 @@ abstract class EventNode extends INode {
     var seconds = delay.inSeconds.remainder(60);
     var millis = delay.inMilliseconds.remainder(1000);
     var str = "";
-    if(waitForUserInput) {
+    if (waitForUserInput) {
       return "Auf Benutzereingabe warten";
     }
-    if(minutes > 0) {
-      str+= "$minutes Minuten ";
+    if (minutes > 0) {
+      str += "$minutes Minuten ";
     }
-    if(seconds > 0) {
-      str+= "$seconds Sekunden ";
+    if (seconds > 0) {
+      str += "$seconds Sekunden ";
     }
-    if(millis > 0) {
-      str+= "$millis Millisekunden ";
+    if (millis > 0) {
+      str += "$millis Millisekunden ";
     }
-    if(str.trim().isEmpty) {
+    if (str.trim().isEmpty) {
       return "Ohne Zeitverzögerung";
     }
     return str.trim();
@@ -96,10 +94,9 @@ class MessageNode extends EventNode {
   IBluetoothMessage message;
   ValueChanged<IBluetoothMessage>? onUpdateMessage;
 
-
   @override
   String getTitle() {
-    switch(message.messageType) {
+    switch (message.messageType) {
       case MessageType.color:
         return "Farbe";
       case MessageType.interpolated:
@@ -126,7 +123,20 @@ class MessageNode extends EventNode {
     return "Unbekannt";
   }
 
-  MessageNode({Key? key, required this.lamps, required this.message, update, onDelete, bool waitForUserInput = false, Duration delay = Duration.zero}) : super(key: key, update: update, onDelete: onDelete, waitForUserInput: waitForUserInput, delay: delay);
+  MessageNode(
+      {Key? key,
+      required this.lamps,
+      required this.message,
+      update,
+      onDelete,
+      bool waitForUserInput = false,
+      Duration delay = Duration.zero})
+      : super(
+            key: key,
+            update: update,
+            onDelete: onDelete,
+            waitForUserInput: waitForUserInput,
+            delay: delay);
 
   @override
   State<StatefulWidget> createState() => MessageNodeState();
@@ -136,10 +146,8 @@ class MessageNode extends EventNode {
 
   @override
   RichText getSubtitle(BuildContext context, TextStyle baseStyle) {
-    return RichText(maxLines: 2, text: TextSpan(
-        style: baseStyle,
-        text: "Unbekannt")
-    );
+    return RichText(
+        maxLines: 2, text: TextSpan(style: baseStyle, text: "Unbekannt"));
   }
 
   @override
@@ -188,7 +196,7 @@ class MessageNode extends EventNode {
   @override
   Future<void> execute() async {
     print("Sending a message of ${message.messageType}");
-    if(lamps.isEmpty) {
+    if (lamps.isEmpty) {
       BluetoothControllerWidget().broadcast(message);
     } else {
       BluetoothControllerWidget().broadcastToGroups(message, lamps);
@@ -197,14 +205,12 @@ class MessageNode extends EventNode {
 
   @override
   Map<String, dynamic> toJson() {
-    return {
-      "message": message.toJson()
-    };
+    return {"message": message.toJson()};
   }
 
   @override
   String getSubtitleText() {
-    switch(message.messageType) {
+    switch (message.messageType) {
       case MessageType.color:
         return "Setze die Farbe ${message.retrieveText()}";
       case MessageType.interpolated:
@@ -231,7 +237,15 @@ class ParentNode extends INode {
   List<EventNode> events;
   EventStatus status;
   String? title;
-  ParentNode({Key? key, update, onDelete, this.type = NodeType.NOT_DEFINED, this.events = const [], this.title, this.status = EventStatus.NONE}) : super(key:key);
+  ParentNode(
+      {Key? key,
+      update,
+      onDelete,
+      this.type = NodeType.NOT_DEFINED,
+      this.events = const [],
+      this.title,
+      this.status = EventStatus.NONE})
+      : super(key: key);
 
   @override
   State<StatefulWidget> createState() => ParentNodeState();
@@ -257,33 +271,29 @@ class AddNode extends INode {
   State<StatefulWidget> createState() => AddNodeState();
 }
 
-abstract class INodeState<T extends INode> extends State<T> {
-}
+abstract class INodeState<T extends INode> extends State<T> {}
 
 class AddNodeState extends INodeState<AddNode> {
   @override
   Widget build(BuildContext context) {
     return DottedBorder(
-      borderType: BorderType.RRect,
-      dashPattern: const [5, 5],
-      radius: const Radius.circular(8),
-      color: Colors.blueAccent,
-      child: Padding(
-        padding: const EdgeInsets.all(58),
-        child: Center(
-          child: IconButton(
-            onPressed: () => {},
-            color: Colors.blueAccent,
-            icon: const Icon(Icons.add),
-          )
-        )
-      )
-    );
+        borderType: BorderType.RRect,
+        dashPattern: const [5, 5],
+        radius: const Radius.circular(8),
+        color: Colors.blueAccent,
+        child: Padding(
+            padding: const EdgeInsets.all(58),
+            child: Center(
+                child: IconButton(
+              onPressed: () => {},
+              color: Colors.blueAccent,
+              icon: const Icon(Icons.add),
+            ))));
   }
 }
 
-
-class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateMixin  {
+class MessageNodeState extends INodeState<MessageNode>
+    with TickerProviderStateMixin {
   List<SBluetoothDevice> connectedDevices = [];
   Map<String, bool> active = {};
   StreamSubscription<dynamic>? myStream;
@@ -291,10 +301,11 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
   @override
   void initState() {
     myStream?.cancel();
-    myStream = BluetoothControllerWidget().connectedDevicesStream().listen((event) {
+    myStream =
+        BluetoothControllerWidget().connectedDevicesStream().listen((event) {
       setState(() {
         connectedDevices = event;
-        active = { for (var e in event) e.device.id.id : true };
+        active = {for (var e in event) e.device.id.id: true};
       });
     });
     super.initState();
@@ -303,10 +314,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
       duration: const Duration(milliseconds: 200),
     );
 
-    _myAnimation = CurvedAnimation(
-        curve: Curves.linear,
-        parent: _controller
-    );
+    _myAnimation = CurvedAnimation(curve: Curves.linear, parent: _controller);
     widget.onUpdateMessage = (m) {
       print("UPDATES MESSAGE");
       setState(() {
@@ -318,7 +326,10 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
 
   void updateActive() {
     setState(() {
-      widget.activeLamps = active.entries.where((element) => element.value == true).map((e) => e.key).toList();
+      widget.activeLamps = active.entries
+          .where((element) => element.value == true)
+          .map((e) => e.key)
+          .toList();
     });
   }
 
@@ -329,7 +340,7 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
   }
 
   String getTitle() {
-    switch(widget.message.messageType) {
+    switch (widget.message.messageType) {
       case MessageType.color:
         return "Farbe";
       case MessageType.interpolated:
@@ -364,8 +375,9 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
   }
 
   Widget getAvatar(String name) {
-    var group = LampGroups.values.firstWhereOrNull((e) => name.toLowerCase() == e.name.toLowerCase());
-    if(group != null) {
+    var group = LampGroups.values
+        .firstWhereOrNull((e) => name.toLowerCase() == e.name.toLowerCase());
+    if (group != null) {
       return Icon(group.icon, size: 18);
     }
     return Text(name[0].toUpperCase());
@@ -378,165 +390,191 @@ class MessageNodeState extends INodeState<MessageNode> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     TextEditingController textController = TextEditingController();
-    return
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(children: widget.lamps.map((e) => Padding(
-                padding: const EdgeInsets.only(left: 4, right: 4),
-                child: Chip(
-                    avatar: CircleAvatar(
-                      child: getAvatar(e),
-                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                    label: Text(e),
-                    materialTapTargetSize:
-                    MaterialTapTargetSize.shrinkWrap,
-                    onDeleted: () => {
-                      setState((){
-                        widget.lamps.remove(e);
-                      })
-                    },
-                  ),
-              )).toList()..add(
-                  Padding(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+                children: widget.lamps
+                    .map((e) => Padding(
+                          padding: const EdgeInsets.only(left: 4, right: 4),
+                          child: Chip(
+                            avatar: CircleAvatar(
+                              child: getAvatar(e),
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                            ),
+                            label: Text(e),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            onDeleted: () => {
+                              setState(() {
+                                widget.lamps.remove(e);
+                              })
+                            },
+                          ),
+                        ))
+                    .toList()
+                  ..add(Padding(
                     padding: const EdgeInsets.only(left: 4, right: 4),
                     child: ActionChip(
-                      materialTapTargetSize:
-                      MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       padding: EdgeInsets.zero,
                       onPressed: () {
-                        showDialog(context: context, builder: (_) {
-                          return AlertDialog(
-                            title: const Text("Gruppenbeschränkung hinzufügen"),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("Vorlagen"),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Wrap(
-                                    children:
-                                    LampGroups.values.map((e) =>
-                                        ActionChip(
-                                          avatar: CircleAvatar(
-                                            foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                            backgroundColor: Theme.of(context).colorScheme.primary,
-                                            child: Icon(e.icon, size: 18),
-                                          ),
-                                            label: Text(e.name.toLowerCase()), onPressed: () => {
-                                              textController.text = e.name.toLowerCase()
-                                            }
-                                        )
-                                    ).toList()
-                                    ,
-                                  ),
+                        showDialog(
+                            context: context,
+                            builder: (_) {
+                              return AlertDialog(
+                                title: const Text(
+                                    "Gruppenbeschränkung hinzufügen"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text("Vorlagen"),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Wrap(
+                                        children: LampGroups.values
+                                            .map((e) => ActionChip(
+                                                avatar: CircleAvatar(
+                                                  foregroundColor:
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimary,
+                                                  backgroundColor:
+                                                      Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                  child: Icon(e.icon, size: 18),
+                                                ),
+                                                label:
+                                                    Text(e.name.toLowerCase()),
+                                                onPressed: () => {
+                                                      textController.text =
+                                                          e.name.toLowerCase()
+                                                    }))
+                                            .toList(),
+                                      ),
+                                    ),
+                                    TextFormField(
+                                      controller: textController,
+                                      decoration: const InputDecoration(
+                                          labelText: "Lampengruppe definieren"),
+                                    )
+                                  ],
                                 ),
-                                TextFormField(
-                                  controller: textController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Lampengruppe definieren"
+                                actions: [
+                                  TextButton(
+                                    child: const Text("Abbrechen"),
+                                    onPressed: () => {Navigator.pop(context)},
                                   ),
-                                )
-                              ],
-                            ),
-                            actions: [
-                              TextButton(child: const Text("Abbrechen"), onPressed: () => { Navigator.pop(context) },),
-                              TextButton(child: const Text("Speichern"), onPressed: () {
-                                if(textController.text.trim().isNotEmpty) {
-                                  setState(() {
-                                    widget.lamps.add(textController.text.trim());
-                                  });
-                                }
-                                Navigator.pop(context);
-                              })
-                            ],
-                          );
-                        });
+                                  TextButton(
+                                      child: const Text("Speichern"),
+                                      onPressed: () {
+                                        if (textController.text
+                                            .trim()
+                                            .isNotEmpty) {
+                                          setState(() {
+                                            widget.lamps.add(
+                                                textController.text.trim());
+                                          });
+                                        }
+                                        Navigator.pop(context);
+                                      })
+                                ],
+                              );
+                            });
                       },
                       label: const Icon(Icons.add),
                     ),
-                  )
-                ))
+                  )))),
+        const Divider(),
+        ListTile(
+          title: TextButton(
+            onPressed: () {
+              setState(() {
+                timeIsExtended = !timeIsExtended;
+              });
+              if (timeIsExtended) {
+                _controller.forward();
+              } else {
+                _controller.reverse();
+              }
+            },
+            child: RichText(
+                text: TextSpan(children: [
+              TextSpan(
+                  text: "Dauer: ",
+                  style: Theme.of(context).textTheme.bodyMedium),
+              WidgetSpan(
+                  child: Icon(Icons.access_time,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.inverseSurface)),
+              TextSpan(
+                  text: " ${widget.formatTime()}",
+                  style: Theme.of(context).textTheme.bodyMedium)
+            ])),
+          ),
+          trailing: IconButton(
+            icon: RotationTransition(
+              turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
+              child: const Icon(Icons.expand_more),
             ),
-            const Divider(),
-            ListTile(
-              title: TextButton(
-                onPressed: () {
-                  setState(() { timeIsExtended = !timeIsExtended;});
-                  if(timeIsExtended) {
-                    _controller.forward();
-                  } else {
-                    _controller.reverse();
-                  }
-                },
-                child: RichText(
-                    text: TextSpan(children: [
-                      TextSpan(text: "Dauer: ", style: Theme.of(context).textTheme.bodyMedium),
-                      WidgetSpan(child: Icon(Icons.access_time, size: 16, color: Theme.of(context).colorScheme.inverseSurface)),
-                      TextSpan(text: " ${widget.formatTime()}", style: Theme.of(context).textTheme.bodyMedium)
-                    ])),
-              ),
-              trailing: IconButton(
-                icon: RotationTransition(
-                  turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                  child: const Icon(Icons.expand_more),
-                ),
-                onPressed: () {
-                  setState(() {
-                    timeIsExtended = !timeIsExtended;
-                  });
-                  if(timeIsExtended) {
-                    _controller.forward();
-                  } else {
-                    _controller.reverse();
-                  }
-                },
-              ),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: timeIsExtended ? null : 0,
-              child:
-                  SizeTransition(
-                    sizeFactor: Tween<double>(begin: 0, end: 1).animate(_controller),
-                    child:
-                    Column(
-                      children: [
-                        CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
-                          setState(() {
-                            widget.waitForUserInput = t!;
-                          })
-                        }, title: const Text("Auf Benutzereingabe warten") ),
-                        if(widget.message is ColorMessage && !widget.waitForUserInput) ...[
-                          CheckboxListTile(value: widget.waitForUserInput, onChanged: (t) => {
+            onPressed: () {
+              setState(() {
+                timeIsExtended = !timeIsExtended;
+              });
+              if (timeIsExtended) {
+                _controller.forward();
+              } else {
+                _controller.reverse();
+              }
+            },
+          ),
+        ),
+        AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: timeIsExtended ? null : 0,
+            child: SizeTransition(
+              sizeFactor: Tween<double>(begin: 0, end: 1).animate(_controller),
+              child: Column(
+                children: [
+                  CheckboxListTile(
+                      value: widget.waitForUserInput,
+                      onChanged: (t) => {
                             setState(() {
+                              widget.waitForUserInput = t!;
                             })
-                          }, title: const Text("Sanfter Übergang") ),
-                        ]
-                      ],
-                    )
-                    ,
-                  )
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: timeIsExtended && !widget.waitForUserInput ? 100 : 0.000001,
-              child: TimePicker(
-                small: true,
-                onChanged: (t) => {
-                  setState(() {
-                    widget.delay = t;
-                  })
-                },
+                          },
+                      title: const Text("Auf Benutzereingabe warten")),
+                  if (widget.message is ColorMessage &&
+                      !widget.waitForUserInput) ...[
+                    CheckboxListTile(
+                        value: widget.waitForUserInput,
+                        onChanged: (t) => {setState(() {})},
+                        title: const Text("Sanfter Übergang")),
+                  ]
+                ],
               ),
-            )
-          ],
-        );
+            )),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: timeIsExtended && !widget.waitForUserInput ? 100 : 0.000001,
+          child: TimePicker(
+            small: true,
+            onChanged: (t) => {
+              setState(() {
+                widget.delay = t;
+              })
+            },
+          ),
+        )
+      ],
+    );
   }
 }
 
@@ -547,7 +585,6 @@ class ParentNodeState extends INodeState<ParentNode> {
 
   @override
   Widget build(BuildContext context) {
-    return
-      Text(getTitle());
+    return Text(getTitle());
   }
 }

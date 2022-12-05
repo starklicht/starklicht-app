@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -22,7 +21,8 @@ abstract class IPersistence {
   Future<List<AnimationMessage>> save(List<AnimationMessage> newValues);
   Future<StarklichtBluetoothOptions> getBluetoothOption(String id);
   Future<bool> hasBluetoothOption(String id);
-  Future<StarklichtBluetoothOptions> setBluetoothOption(String id, StarklichtBluetoothOptions option);
+  Future<StarklichtBluetoothOptions> setBluetoothOption(
+      String id, StarklichtBluetoothOptions option);
 }
 
 class Persistence implements IPersistence {
@@ -37,12 +37,7 @@ class Persistence implements IPersistence {
       ColorPoint(Colors.white, 1),
     ],
     AnimationSettingsConfig(
-      InterpolationType.linear,
-      TimeFactor.repeat,
-      0,
-      1,
-      0
-    ),
+        InterpolationType.linear, TimeFactor.repeat, 0, 1, 0),
   );
   static const String animationStore = "animations";
   static const String colors = "colors";
@@ -53,7 +48,7 @@ class Persistence implements IPersistence {
     final prefs = await SharedPreferences.getInstance();
     var animations = prefs.getStringList(animationStore);
     var fac = AnimationMessageFactory();
-    if(animations == null) {
+    if (animations == null) {
       return [];
     }
     return animations.map((e) => fac.build(e)).toList();
@@ -66,7 +61,7 @@ class Persistence implements IPersistence {
 
   Future<List<Color>> loadCustomColors() async {
     var sPrefs = await SharedPreferences.getInstance();
-    if(!sPrefs.containsKey(colors)) {
+    if (!sPrefs.containsKey(colors)) {
       return [];
     }
     var colorList = sPrefs.getStringList(colors);
@@ -78,23 +73,21 @@ class Persistence implements IPersistence {
     assert(a.title != null);
     var currentAnimations = await getAnimationStore();
     var i = currentAnimations.indexWhere((element) => element.title == a.title);
-    if(i > -1) {
+    if (i > -1) {
       currentAnimations[i] = a;
     } else {
       currentAnimations.add(a);
     }
     var sPrefs = await SharedPreferences.getInstance();
-    sPrefs.setStringList(
-        animationStore,
-        currentAnimations.map((e) => jsonEncode(e.toJson())).toList()
-    );
+    sPrefs.setStringList(animationStore,
+        currentAnimations.map((e) => jsonEncode(e.toJson())).toList());
     return currentAnimations;
   }
-  
+
   Future<AnimationMessage> getEditorAnimation() async {
     final prefs = await SharedPreferences.getInstance();
     var animation = prefs.getString(editorAnimation);
-    if(animation == null) {
+    if (animation == null) {
       return defaultEditorAnimation;
     }
     return AnimationMessageFactory().build(animation);
@@ -136,17 +129,16 @@ class Persistence implements IPersistence {
     currentAnimations.removeWhere((element) => element.title == title);
     print(currentAnimations.length);
     var sPrefs = await SharedPreferences.getInstance();
-    sPrefs.setStringList(
-        animationStore,
-        currentAnimations.map((e) => jsonEncode(e.toJson())).toList()
-    );
+    sPrefs.setStringList(animationStore,
+        currentAnimations.map((e) => jsonEncode(e.toJson())).toList());
     return currentAnimations;
   }
 
   @override
   Future<AnimationMessage?> findByName(String name) async {
     var currentAnimations = await getAnimationStore();
-    return currentAnimations.firstWhereOrNull((element) => element.title == name);
+    return currentAnimations
+        .firstWhereOrNull((element) => element.title == name);
   }
 
   @override
@@ -157,16 +149,18 @@ class Persistence implements IPersistence {
 
   @override
   Future<bool> rename(String name, String newName) async {
-    if(name == newName) {
+    if (name == newName) {
       return false;
     }
     var l = await getAnimationStore();
-    if(l.indexWhere((element) => element.title == newName) > -1) {
-      throw Exception("Konnte nicht umbenannt werden, da Animation $newName schon existiert");
+    if (l.indexWhere((element) => element.title == newName) > -1) {
+      throw Exception(
+          "Konnte nicht umbenannt werden, da Animation $newName schon existiert");
     }
     var index = l.indexWhere((element) => element.title == name);
-    if(index == -1) {
-      throw Exception("Konnte nicht umbenannt werden, da Animation $name nicht existiert");
+    if (index == -1) {
+      throw Exception(
+          "Konnte nicht umbenannt werden, da Animation $name nicht existiert");
     }
     l[index].title = newName;
     save(l);
@@ -177,9 +171,7 @@ class Persistence implements IPersistence {
   Future<List<AnimationMessage>> save(List<AnimationMessage> newValues) async {
     var sPrefs = await SharedPreferences.getInstance();
     sPrefs.setStringList(
-        animationStore,
-        newValues.map((e) => jsonEncode(e.toJson())).toList()
-    );
+        animationStore, newValues.map((e) => jsonEncode(e.toJson())).toList());
     return newValues;
   }
 
@@ -187,14 +179,15 @@ class Persistence implements IPersistence {
   Future<StarklichtBluetoothOptions> getBluetoothOption(String id) async {
     var sPrefs = await SharedPreferences.getInstance();
     var json = sPrefs.getString("$optionsPrefix$id");
-    if(json == null) {
+    if (json == null) {
       return setBluetoothOption(id, StarklichtBluetoothOptions(id));
     }
     return StarklichtBluetoothOptionsFactory().build(json);
   }
 
   @override
-  Future<StarklichtBluetoothOptions> setBluetoothOption(String id, StarklichtBluetoothOptions option) async {
+  Future<StarklichtBluetoothOptions> setBluetoothOption(
+      String id, StarklichtBluetoothOptions option) async {
     var sPrefs = await SharedPreferences.getInstance();
     sPrefs.setString("$optionsPrefix$id", jsonEncode(option.toJson()));
     return option;

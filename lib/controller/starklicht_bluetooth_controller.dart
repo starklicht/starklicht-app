@@ -7,10 +7,10 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:starklicht_flutter/model/factory.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import '../messages/imessage.dart';
+
 const serviceUUID = "0000ffe0-0000-1000-8000-00805f9b34fb";
 const characterUUID = "0000ffe1-0000-1000-8000-00805f9b34fb";
 const iosUUID = "FFE0";
-
 
 class StarklichtBluetoothOptions {
   bool inverse;
@@ -20,7 +20,13 @@ class StarklichtBluetoothOptions {
   String id;
   Set<String> tags;
   String? name;
-  StarklichtBluetoothOptions(this.id, { this.inverse = false, this.active = true, this.delay = false, this.delayTimeMillis = 0, this.tags = const {}, this.name });
+  StarklichtBluetoothOptions(this.id,
+      {this.inverse = false,
+      this.active = true,
+      this.delay = false,
+      this.delayTimeMillis = 0,
+      this.tags = const {},
+      this.name});
 
   StarklichtBluetoothOptions withInverse(bool inverse) {
     this.inverse = inverse;
@@ -53,14 +59,14 @@ class StarklichtBluetoothOptions {
   }
 
   Map<String, dynamic> toJson() => {
-    'inverse': inverse,
-    'active': active,
-    'delay': delay,
-    'delayTime': delayTimeMillis,
-    'id': id,
-    'name': name,
-    'tags': tags.toList()
-  };
+        'inverse': inverse,
+        'active': active,
+        'delay': delay,
+        'delayTime': delayTimeMillis,
+        'id': id,
+        'name': name,
+        'tags': tags.toList()
+      };
 
   StarklichtBluetoothOptions withoutTag(String s) {
     tags.remove(s);
@@ -68,20 +74,22 @@ class StarklichtBluetoothOptions {
   }
 }
 
-class StarklichtBluetoothOptionsFactory implements Factory<StarklichtBluetoothOptions> {
+class StarklichtBluetoothOptionsFactory
+    implements Factory<StarklichtBluetoothOptions> {
   @override
   StarklichtBluetoothOptions build(String params) {
     var json = jsonDecode(params);
     print(json["tags"]);
-    return StarklichtBluetoothOptions(
-      json["id"],
-      inverse: json["inverse"] as bool,
-      active: json["active"] as bool,
-      delay: json["delay"] as bool,
-      delayTimeMillis: json["delayTime"],
-      name: json["name"],
-      tags: (json["tags"] != null ? json["tags"] as List<dynamic> : <dynamic>[]).map((e) => e.toString()).toSet()
-    );
+    return StarklichtBluetoothOptions(json["id"],
+        inverse: json["inverse"] as bool,
+        active: json["active"] as bool,
+        delay: json["delay"] as bool,
+        delayTimeMillis: json["delayTime"],
+        name: json["name"],
+        tags:
+            (json["tags"] != null ? json["tags"] as List<dynamic> : <dynamic>[])
+                .map((e) => e.toString())
+                .toSet());
   }
 }
 
@@ -92,9 +100,7 @@ class SBluetoothDevice {
   SBluetoothDevice(this.device, this.options, this.characteristic);
 }
 
-enum ConnectionType {
-  CONNECT, DISCONNECT
-}
+enum ConnectionType { CONNECT, DISCONNECT }
 
 class ConnectionDiff {
   SBluetoothDevice device;
@@ -120,22 +126,23 @@ abstract class BluetoothController<T> {
   void broadcastToGroups(IBluetoothMessage m, Set<String> groups);
 
   Stream<ConnectionDiff> connectionChangeStream();
-
 }
 
-class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice> {
-  static final BluetoothControllerWidget _instance = BluetoothControllerWidget._internal();
+class BluetoothControllerWidget
+    implements BluetoothController<SBluetoothDevice> {
+  static final BluetoothControllerWidget _instance =
+      BluetoothControllerWidget._internal();
   factory BluetoothControllerWidget() => _instance;
   Function(String)? callback;
   var makingConnectOperation = false;
-
 
   BluetoothControllerWidget._internal() {
     registerHandlers();
   }
 
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
-  StreamController<List<SBluetoothDevice>> foundDevicesStream = BehaviorSubject();
+  StreamController<List<SBluetoothDevice>> foundDevicesStream =
+      BehaviorSubject();
   StreamController<List<SBluetoothDevice>> connectionStream = BehaviorSubject();
   StreamController<ConnectionDiff> connectionChanges = BehaviorSubject();
   List<SBluetoothDevice> foundDevices = [];
@@ -145,7 +152,6 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   // Map<String, StarklichtBluetoothOptions> options = {};
   // final Map<BluetoothDevice, StarklichtBluetoothOptions> optionsMap = {};
   Stopwatch stopwatch = Stopwatch()..start();
-
 
   void registerHandlers() {
     Timer.periodic(const Duration(seconds: 100), (_) {
@@ -187,7 +193,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
             connectionStream.add(connectedDevices);
           }
         });
-      } catch(e) {
+      } catch (e) {
         print("Could not connect to devices. nvm");
       }
     });
@@ -200,17 +206,16 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   @override
   Stream<List<SBluetoothDevice>> scan(int duration) {
     flutterBlue.stopScan().then((value) => {
-        foundDevices.clear(),
-        foundDevicesStream.add(foundDevices),
-        flutterBlue.scan(timeout: Duration(seconds: duration)).listen((res) {
+          foundDevices.clear(),
+          foundDevicesStream.add(foundDevices),
+          flutterBlue.scan(timeout: Duration(seconds: duration)).listen((res) {
             if (res.advertisementData.serviceUuids.contains(serviceUUID) ||
                 res.advertisementData.serviceUuids.contains(iosUUID)) {
               getOption(res.device.id.id).then((option) => {
-                foundDevices.add(
-                  SBluetoothDevice(res.device, option, null)
-                ),
-                foundDevicesStream.add(foundDevices)
-              });
+                    foundDevices
+                        .add(SBluetoothDevice(res.device, option, null)),
+                    foundDevicesStream.add(foundDevices)
+                  });
             }
           })
         });
@@ -222,20 +227,19 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
     makingConnectOperation = true;
     await device.device.connect();
     postConnect(device.device).then((value) => {
-      connectedDevices.add(
-        value
-      ),
-      connectionStream.add(connectedDevices),
-      connectionChanges.add(ConnectionDiff(value, ConnectionType.CONNECT, false)),
-      makingConnectOperation = false
-    });
+          connectedDevices.add(value),
+          connectionStream.add(connectedDevices),
+          connectionChanges
+              .add(ConnectionDiff(value, ConnectionType.CONNECT, false)),
+          makingConnectOperation = false
+        });
   }
 
   Future<SBluetoothDevice> postConnect(BluetoothDevice device) async {
     List<BluetoothService> services = await device.discoverServices();
     var s = services.firstWhere((service) => service.uuid == Guid(serviceUUID));
-    var c = s.characteristics.firstWhere((characteristic) =>
-    characteristic.uuid == Guid(characterUUID));
+    var c = s.characteristics.firstWhere(
+        (characteristic) => characteristic.uuid == Guid(characterUUID));
     var o = await getOption(device.id.id);
     var d = SBluetoothDevice(device, o, c);
     return d;
@@ -254,7 +258,7 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   int broadcast(IBluetoothMessage m) {
     if (canSend()) {
       for (var value in connectedDevices) {
-          m.send(value.characteristic!, value.options);
+        m.send(value.characteristic!, value.options);
       }
       stopwatch = Stopwatch()..start();
     }
@@ -273,7 +277,6 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   }
 
   @override
-
   @override
   bool send(IBluetoothMessage m, SBluetoothDevice device) {
     return false;
@@ -294,14 +297,14 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
     return flutterBlue.state;
   }
 
-
-
   @override
   void setOptions(String id, StarklichtBluetoothOptions o) {
     Persistence().setBluetoothOption(id, o).then((value) => {
-      connectedDevices.firstWhere((element) => element.device.id.id == id).options = o,
-      connectionStream.add(connectedDevices)
-    });
+          connectedDevices
+              .firstWhere((element) => element.device.id.id == id)
+              .options = o,
+          connectionStream.add(connectedDevices)
+        });
   }
 
   @override
@@ -311,17 +314,22 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
 
   @override
   String getName(String id) {
-    return getCustomName(id) ?? connectedDevices.firstWhereOrNull((element) =>
-      element.device.id.id == id
-    )?.device.name ?? "No Name";
+    return getCustomName(id) ??
+        connectedDevices
+            .firstWhereOrNull((element) => element.device.id.id == id)
+            ?.device
+            .name ??
+        "No Name";
   }
 
   @override
   disconnect(SBluetoothDevice d) {
     makingConnectOperation = true;
     d.device.disconnect().then((value) {
-      var remove = connectedDevices.firstWhere((element) => element.device.id.id == d.device.id.id);
-      connectionChanges.add(ConnectionDiff(remove, ConnectionType.DISCONNECT, false));
+      var remove = connectedDevices
+          .firstWhere((element) => element.device.id.id == d.device.id.id);
+      connectionChanges
+          .add(ConnectionDiff(remove, ConnectionType.DISCONNECT, false));
       connectedDevices.remove(remove);
       connectionStream.add(connectedDevices);
       makingConnectOperation = false;
@@ -330,7 +338,10 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
 
   @override
   String? getCustomName(String id) {
-    return connectedDevices.firstWhere((element) => element.device.id.id == id).options.name;
+    return connectedDevices
+        .firstWhere((element) => element.device.id.id == id)
+        .options
+        .name;
   }
 
   @override
@@ -342,7 +353,8 @@ class BluetoothControllerWidget implements BluetoothController<SBluetoothDevice>
   void broadcastToGroups(IBluetoothMessage<dynamic> m, Set<String> groups) {
     if (canSend()) {
       for (var value in connectedDevices) {
-        if(value.options.tags.firstWhereOrNull((e) => groups.contains(e)) != null) {
+        if (value.options.tags.firstWhereOrNull((e) => groups.contains(e)) !=
+            null) {
           print("Sending");
           m.send(value.characteristic!, value.options);
         } else {
