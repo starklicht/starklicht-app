@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
@@ -124,9 +125,15 @@ class MessageNodeExecutor {
 
 class OrchestraTimeline extends StatefulWidget {
   var running = false;
-  var zoomFactor = .2;
-  var cardHeight = 80.0;
+  var zoomFactor = 1.0;
+  var scrollPosition = 0.0;
+  var baseZoomFactor = 1.0;
+  var cardHeight = 60.0;
+  var minZoomFactor = .01;
+  var maxZoomFactor = 2.0;
   var restart = false;
+  var opacityWhenDragging = .5;
+
   VoidCallback? play;
   VoidCallback? onFinishPlay;
 
@@ -296,6 +303,13 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      scrollController.addListener(() {
+        setState(() {
+          widget.scrollPosition = scrollController.offset;
+        });
+      });
+    });
     widget.play = () {
       print("OK LET'S GO!");
       var messages = widget.nodes.expand((element) => element.events).toList();
@@ -342,140 +356,240 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
 
   int expandedTitle = -1;
   DragType dragType = DragType.GROUP;
+  ScrollController scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              SizedBox(
-                  width: 10000,
-                  height: 40,
-                  child: Ruler(
-                    zoom: widget.zoomFactor,
-                    totalSeconds: 20,
-                  )),
-              ...widget.nodes
-                  .map((e) => Row(
-                      children: e.events
-                          .map((message) => Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: message.cardIndicator ==
-                                            CardIndicator.PROGRESS
-                                        ? Border.all(
-                                            width: 1,
-                                            color: Theme.of(context)
-                                                .primaryColorLight)
-                                        : null,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    color: message.cardIndicator ==
-                                            CardIndicator.COLOR
-                                        ? message.toColor()
-                                        : null,
-                                    gradient: message.cardIndicator ==
-                                            CardIndicator.GRADIENT
-                                        ? message.toGradient()
-                                        : null,
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  height: widget.cardHeight,
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    child: ListTile(
-                                      contentPadding: const EdgeInsets.all(2),
-                                      leading: Draggable(
-                                        feedback: const Icon(
-                                          Icons.drag_indicator,
-                                          color: Colors.white,
-                                        ),
-                                        childWhenDragging: const SizedBox(),
-                                        axis: Axis.horizontal,
-                                        child: const Icon(
-                                          Icons.drag_indicator,
-                                          color: Colors.white,
-                                        ),
-                                        onDragUpdate: (data) => {print(data)},
-                                      ),
-                                      trailing: Draggable(
-                                        onDragUpdate: (data) => {
-                                          setState(() {
-                                            var deltaMill =
-                                                ((data.delta.dx ?? 0) ~/
-                                                        widget.zoomFactor)
-                                                    .toInt();
-                                            message.delay += Duration(
-                                                milliseconds: deltaMill);
-                                          })
-                                        },
-                                        feedback: const RotatedBox(
-                                          quarterTurns: 1,
-                                          child: Icon(
-                                            Icons.drag_handle,
-                                            color: Colors.white,
+        /*Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: Container(
+            width: 10000,
+            height: 128,
+            decoration: BoxDecoration(color: Colors.blue, boxShadow: [
+              BoxShadow(
+                color: Colors.black,
+                blurRadius: 2.0,
+                spreadRadius: 0.0,
+                offset: Offset(2.0, 2.0), // shadow direction: bottom right
+              ),
+            ]),
+          ),
+        ),*/
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+                onPressed: () => {
+                      scrollController.animateTo(0,
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.ease)
+                    },
+                icon: Icon(Icons.skip_previous)),
+            IconButton(
+                onPressed: () => {
+                      scrollController.animateTo(500,
+                          duration: Duration(seconds: 10), curve: Curves.linear)
+                    },
+                icon: Icon(Icons.play_arrow))
+          ],
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onScaleStart: (details) {
+            setState(() {
+              widget.baseZoomFactor = widget.zoomFactor;
+            });
+          },
+          onScaleUpdate: (details) {
+            setState(() {
+              var zoom = widget.baseZoomFactor * details.scale;
+              zoom = max(widget.minZoomFactor, zoom);
+              zoom = min(widget.maxZoomFactor, zoom);
+              widget.zoomFactor = zoom;
+            });
+          },
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                reverse: false,
+                controller: scrollController,
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width / 2,
+                      right: MediaQuery.of(context).size.width / 2),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // SizedBox(
+                        //     width: 10000,
+                        //     height: 40,
+                        //     child: Ruler(
+                        //       zoom: widget.zoomFactor,
+                        //       totalSeconds: 20,
+                        //     )),
+                        ...widget.nodes
+                            .map((e) => Row(
+                                    children: e.events.map((message) {
+                                  var color = message.cardIndicator ==
+                                          CardIndicator.COLOR
+                                      ? message.toColor()
+                                      : null;
+                                  var gradient = message.cardIndicator ==
+                                          CardIndicator.GRADIENT
+                                      ? message.toGradient()
+                                      : null;
+                                  return Padding(
+                                    padding: const EdgeInsets.all(2),
+                                    child: Opacity(
+                                      opacity: message.isDragging
+                                          ? widget.opacityWhenDragging
+                                          : 1,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                            border: message.cardIndicator ==
+                                                    CardIndicator.PROGRESS
+                                                ? Border.all(
+                                                    width: 1,
+                                                    color: Theme.of(context)
+                                                        .primaryColorLight)
+                                                : null,
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            color: color,
+                                            gradient: gradient),
+                                        clipBehavior: Clip.antiAlias,
+                                        height: widget.cardHeight,
+                                        child: Container(
+                                          alignment: Alignment.center,
+                                          child: ListTile(
+                                            contentPadding:
+                                                const EdgeInsets.all(2),
+                                            leading: Draggable(
+                                              feedback: Container(
+                                                clipBehavior: Clip.antiAlias,
+                                                padding: EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8.0),
+                                                    color: color,
+                                                    gradient: gradient),
+                                                child: const Icon(
+                                                  Icons.drag_indicator,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              childWhenDragging:
+                                                  const SizedBox(),
+                                              child: const Icon(
+                                                Icons.drag_indicator,
+                                                color: Colors.white,
+                                              ),
+                                              onDragStarted: () => {
+                                                setState(() {
+                                                  message.isDragging = true;
+                                                })
+                                              },
+                                              onDragEnd: (details) => {
+                                                setState(() {
+                                                  message.isDragging = false;
+                                                })
+                                              },
+                                              onDragUpdate: (data) => {},
+                                            ),
+                                            trailing: Draggable(
+                                              onDragUpdate: (data) => {
+                                                setState(() {
+                                                  var deltaMill =
+                                                      ((data.delta.dx ?? 0) ~/
+                                                              widget.zoomFactor)
+                                                          .toInt();
+                                                  message.delay += Duration(
+                                                      milliseconds: deltaMill);
+                                                })
+                                              },
+                                              feedback: const RotatedBox(
+                                                quarterTurns: 1,
+                                                child: Icon(
+                                                  Icons.drag_handle,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              childWhenDragging:
+                                                  const SizedBox(),
+                                              axis: Axis.horizontal,
+                                              child: const RotatedBox(
+                                                quarterTurns: 1,
+                                                child: Icon(
+                                                  Icons.drag_handle,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            title: Wrap(
+                                              alignment: WrapAlignment.start,
+                                              direction: Axis.horizontal,
+                                              spacing: double.maxFinite,
+                                              runAlignment:
+                                                  WrapAlignment.center,
+                                              crossAxisAlignment:
+                                                  WrapCrossAlignment.center,
+                                              children: [
+                                                Text(
+                                                  "${message.getTitle()} (${message.formatTime()}) ${message.isDragging})",
+                                                  style: const TextStyle(
+                                                      fontSize: 10,
+                                                      overflow: TextOverflow
+                                                          .ellipsis),
+                                                  maxLines: 1,
+                                                ),
+                                                Text(
+                                                  message.getSubtitleText(),
+                                                  style: const TextStyle(
+                                                      fontSize: 8,
+                                                      overflow: TextOverflow
+                                                          .ellipsis),
+                                                  maxLines: 1,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        childWhenDragging: const SizedBox(),
-                                        axis: Axis.horizontal,
-                                        child: const RotatedBox(
-                                          quarterTurns: 1,
-                                          child: Icon(
-                                            Icons.drag_handle,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      title: Wrap(
-                                        alignment: WrapAlignment.start,
-                                        direction: Axis.horizontal,
-                                        spacing: double.maxFinite,
-                                        runAlignment: WrapAlignment.center,
-                                        crossAxisAlignment:
-                                            WrapCrossAlignment.center,
-                                        children: [
-                                          Text(
-                                            "${message.getTitle()} (${message.formatTime()})",
-                                            style: const TextStyle(
-                                                fontSize: 10,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                            maxLines: 1,
-                                          ),
-                                          Text(
-                                            message.getSubtitleText(),
-                                            style: const TextStyle(
-                                                fontSize: 8,
-                                                overflow:
-                                                    TextOverflow.ellipsis),
-                                            maxLines: 1,
-                                          ),
-                                        ],
+                                        width: max(
+                                            message.delay.inMilliseconds *
+                                                    (widget.zoomFactor) -
+                                                4,
+                                            0),
                                       ),
                                     ),
-                                  ),
-                                  width: max(
-                                      message.delay.inMilliseconds *
-                                              (widget.zoomFactor) -
-                                          4,
-                                      0),
-                                ),
-                              ))
-                          .toList()))
-                  .toList()
-            ])),
-        Slider(
-            value: widget.zoomFactor,
-            min: .005,
-            max: 1,
-            onChanged: (v) => setState(() {
-                  widget.zoomFactor = v;
-                })),
+                                  );
+                                }).toList()))
+                            .toList()
+                      ]),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(
+                    left: MediaQuery.of(context).size.width / 2 - 1,
+                    right: MediaQuery.of(context).size.width / 2 - 1),
+                child: SizedBox(
+                    height: 400,
+                    child: Container(
+                        decoration: BoxDecoration(
+                      border: Border(
+                          left: BorderSide(color: Colors.white, width: 2)),
+                    ))),
+              ),
+            ],
+          ),
+        ),
+        Text("ZoomFactor: ${widget.zoomFactor}, scroll: ${formatScrollTime()}"),
         Slider(
             value: widget.cardHeight,
             min: 10,
@@ -485,6 +599,18 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                 }))
       ],
     );
+  }
+
+  Duration getScrollLocation() {
+    return Duration(milliseconds: (widget.scrollPosition ~/ widget.zoomFactor));
+  }
+
+  String formatScrollTime() {
+    var time = getScrollLocation();
+    var minutes = time.inMinutes.remainder(60).toString();
+    var seconds = time.inSeconds.remainder(60).toString();
+    var millis = time.inMilliseconds.remainder(1000).toString();
+    return "${minutes.padLeft(2, '0')}:${seconds.padLeft(2, '0')}:${millis.padLeft(4, '0')}";
   }
 
   bool hasReached(index) {

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:collection/src/iterable_extensions.dart';
 
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/messages/imessage.dart';
@@ -34,6 +34,8 @@ abstract class EventNode extends INode {
   CardIndicator get cardIndicator;
 
   Future<void> execute();
+
+  bool isDragging = false;
 
   bool hasLamps();
 
@@ -236,6 +238,7 @@ class MessageNode extends EventNode {
 class ParentNode extends INode {
   List<EventNode> events;
   EventStatus status;
+  bool isDragging = false;
   String? title;
   ParentNode(
       {Key? key,

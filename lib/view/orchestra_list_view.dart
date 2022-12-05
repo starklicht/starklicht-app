@@ -39,40 +39,14 @@ class OrchestraLiveViewState extends State<OrchestraListView> {
                 borderRadius: BorderRadius.all(Radius.circular(12))),
             child: InkWell(
               onTap: () => {
-                showDialog(
-                    context: context,
-                    builder: (_) {
-                      return AlertDialog(
-                        backgroundColor:
-                            Theme.of(context).scaffoldBackgroundColor,
-                        insetPadding: const EdgeInsets.all(16),
-                        contentPadding: const EdgeInsets.all(16),
-                        title: Text(widget.animations[index]),
-                        content: SizedBox(
-                            height: 20000,
-                            width: 2000,
-                            child: widget.orchestra),
-                        actions: [
-                          IconButton(
-                              onPressed: () {
-                                print(widget.orchestra.nodes[0].events.length);
-                                setState(() {
-                                  widget.isPlaying = true;
-                                });
-                                widget.orchestra.play?.call();
-                              },
-                              icon: widget.isPlaying
-                                  ? const Icon(Icons.stop)
-                                  : const Icon(Icons.play_arrow)),
-                          TextButton(
-                              onPressed: () => {Navigator.pop(context)},
-                              child: const Text("Abbrechen")),
-                          TextButton(
-                              onPressed: () => {Navigator.pop(context)},
-                              child: const Text("Speichern"))
-                        ],
-                      );
-                    })
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                            appBar: AppBar(
+                              title: Text("Timeline-Editor"),
+                            ),
+                            body: OrchestraTimeline())))
               },
               child: ListTile(
                 contentPadding: const EdgeInsets.all(18),
