@@ -31,6 +31,7 @@ abstract class EventNode extends INode {
       required this.delay})
       : super(key: key);
 
+  bool isSelected = false;
   CardIndicator get cardIndicator;
 
   Future<void> execute();
@@ -235,12 +236,14 @@ class MessageNode extends EventNode {
   }
 }
 
-class ParentNode extends INode {
+class MessageTrack extends INode {
   List<EventNode> events;
   EventStatus status;
+  bool isSelected = false;
   bool isDragging = false;
+  bool active = true;
   String? title;
-  ParentNode(
+  MessageTrack(
       {Key? key,
       update,
       onDelete,
@@ -262,6 +265,40 @@ class ParentNode extends INode {
 
   @override
   NodeType type;
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
+  }
+}
+
+class LampGroupChip extends StatelessWidget {
+  final String name;
+  const LampGroupChip({Key? key, required this.name}) : super(key: key);
+
+  Widget getAvatar(String name) {
+    var group = LampGroups.values
+        .firstWhereOrNull((e) => name.toLowerCase() == e.name.toLowerCase());
+    if (group != null) {
+      return Icon(group.icon, size: 18);
+    }
+    return Text(name[0].toUpperCase());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      clipBehavior: Clip.hardEdge,
+      avatar: CircleAvatar(
+        child: getAvatar(name),
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+      label: Text(name.capitalize()),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
 }
 
 class AddNode extends INode {
@@ -581,7 +618,7 @@ class MessageNodeState extends INodeState<MessageNode>
   }
 }
 
-class ParentNodeState extends INodeState<ParentNode> {
+class ParentNodeState extends INodeState<MessageTrack> {
   String getTitle() {
     return widget.title ?? "Unbenannt";
   }

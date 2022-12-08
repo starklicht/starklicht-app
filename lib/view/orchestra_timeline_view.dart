@@ -34,14 +34,14 @@ class ChildEventChanged {
 }
 
 class MessageNodeExecutor {
-  List<ParentNode> nodes;
+  List<MessageTrack> tracks;
   bool running;
   ValueChanged<double>? onProgressChanged;
 
   ValueChanged<EventChanged>? onEventUpdate;
   ValueChanged<ChildEventChanged>? onChildEventUpdate;
 
-  MessageNodeExecutor(this.nodes,
+  MessageNodeExecutor(this.tracks,
       {this.running = false,
       this.onProgressChanged,
       this.onEventUpdate,
@@ -77,74 +77,98 @@ class MessageNodeExecutor {
     return continueProgram;
   }
 
-  Future<void> execute(BuildContext context) async {
-    var queue = Queue<ParentNode>();
-    queue.addAll(nodes);
-    print("Queue with ${queue.length} elements");
+  Future<void> executeTrack(int trackIndex, Duration startTime) async {
+    var track = tracks[trackIndex];
+    var queue = Queue<EventNode>();
+    var millis = startTime.inMilliseconds;
+    var firstSleepTime = 0;
+    if (millis > 0) {
+      var lastTime = 0;
+      var timeMap = <int, EventNode>{};
+      for (var message in track.events) {
+        lastTime += message.delay.inMilliseconds;
+        timeMap[lastTime] = message;
+      }
+      var filteredTimes = timeMap.keys.where((time) => time > millis).toList();
+      print(filteredTimes);
+      if (filteredTimes.isEmpty) {
+        print('Empty');
+        return;
+      }
+      firstSleepTime = filteredTimes[0] - millis;
+      queue.addAll(filteredTimes.map((e) => timeMap[e]!));
+    } else {
+      queue.addAll(track.events);
+    }
+    print(firstSleepTime);
     running = true;
     int currentIndex = -1;
+    onEventUpdate?.call(EventChanged(trackIndex, EventStatus.RUNNING));
     while (queue.isNotEmpty && running) {
-      var parent = queue.removeFirst();
+      var message = queue.removeFirst();
       currentIndex++;
-      onEventUpdate?.call(EventChanged(currentIndex, EventStatus.RUNNING));
-      var eventQueue = Queue<EventNode>();
-      eventQueue.addAll(parent.events);
-      int currentChildIndex = -1;
-      while (eventQueue.isNotEmpty && running) {
-        var event = eventQueue.removeFirst();
-        currentChildIndex++;
-        onChildEventUpdate?.call(ChildEventChanged(
-            currentIndex, currentChildIndex, EventStatus.RUNNING));
-        await event.execute();
-        if (event.waitForUserInput) {
-          print("Waiting for user Input");
-          await waitForUserInput(context);
-        } else if (event.delay.inMilliseconds > 0) {
-          var startTime = DateTime.now().millisecondsSinceEpoch;
-          running = true;
-          var elapsedMillis = 0;
-          do {
-            await Future.delayed(const Duration(milliseconds: 50), () {
-              elapsedMillis = DateTime.now().millisecondsSinceEpoch - startTime;
-              print(elapsedMillis);
-              var progress = elapsedMillis / event.delay.inMilliseconds;
-              onChildEventUpdate?.call(ChildEventChanged(
-                  currentIndex, currentChildIndex, EventStatus.RUNNING,
-                  progress: progress));
-            });
-          } while (elapsedMillis <= event.delay.inMilliseconds);
-        }
-        onChildEventUpdate?.call(ChildEventChanged(
-            currentIndex, currentChildIndex, EventStatus.FINISHED));
+      onChildEventUpdate?.call(
+          ChildEventChanged(trackIndex, currentIndex, EventStatus.RUNNING));
+      message.execute();
+      if (currentIndex == 0 && millis > 0) {
+        await Future.delayed(Duration(milliseconds: firstSleepTime));
+      } else {
+        await Future.delayed(message.delay);
       }
-      onEventUpdate?.call(EventChanged(currentIndex, EventStatus.FINISHED));
+      onChildEventUpdate?.call(
+          ChildEventChanged(trackIndex, currentIndex, EventStatus.FINISHED));
     }
-    print("Finished");
+    onEventUpdate?.call(EventChanged(trackIndex, EventStatus.FINISHED));
+  }
+
+  Future<void> execute(Duration startTime) async {
+    tracks.asMap().forEach((index, value) {
+      if (value.active) {
+        executeTrack(index, startTime);
+      }
+    });
   }
 }
 
 class OrchestraTimeline extends StatefulWidget {
   var running = false;
-  var zoomFactor = 1.0;
+  var zoomFactor = 0.2;
+  var baseZoomFactor = 0.2;
+
   var scrollPosition = 0.0;
-  var baseZoomFactor = 1.0;
-  var cardHeight = 60.0;
-  var minZoomFactor = .01;
-  var maxZoomFactor = 2.0;
+  var lastScrollPosition = 0.0;
+  var cardHeight = 80.0;
+  var minTrackHeight = 80.0;
+  var minZoomFactor = .02;
+  var maxZoomFactor = 1.0;
   var restart = false;
   var opacityWhenDragging = .5;
-
+  var opacityWhenInactive = .25;
+  var maxTracks = 7;
   VoidCallback? play;
   VoidCallback? onFinishPlay;
 
-  List<ParentNode> nodes = [
-    ParentNode(
+  var lampGroups = [
+    "fill",
+    "key",
+    "back",
+    "atmosphere",
+    "effect",
+    "spot",
+    "ambient"
+  ];
+
+  var showMenu = true;
+  double menuWidth = 180.0;
+
+  List<MessageTrack> tracks = [
+    MessageTrack(
       title: "Test",
       events: [
         MessageNode(
           lamps: const {},
           message: BrightnessMessage(10),
-          delay: const Duration(seconds: 2, milliseconds: 300),
+          delay: const Duration(seconds: 1),
         ),
         MessageNode(
           lamps: const {},
@@ -157,27 +181,98 @@ class OrchestraTimeline extends StatefulWidget {
                 1,
                 0,
               )),
-          delay: const Duration(seconds: 2, milliseconds: 300),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.red),
           delay: const Duration(seconds: 1),
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(seconds: 1),
+          message: ColorMessage.fromColor(Colors.yellow),
+          delay: const Duration(seconds: 2, milliseconds: 500),
         ),
         MessageNode(
           lamps: const {},
           message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(seconds: 1, milliseconds: 200),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.green),
+          delay: const Duration(seconds: 10),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.cyan),
           delay: const Duration(seconds: 1),
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.purple),
+          message: ColorMessage.fromColor(Colors.teal),
           delay: const Duration(seconds: 1),
+        ),
+      ],
+    ),
+    MessageTrack(
+      events: [
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(seconds: 4),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.lightBlue),
+          delay: const Duration(seconds: 5),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blueGrey),
+          delay: const Duration(milliseconds: 600),
+        ),
+      ],
+    ),
+    MessageTrack(
+      events: [
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.yellow),
+          delay: const Duration(seconds: 2),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.green),
+          delay: const Duration(seconds: 3),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.yellow),
+          delay: const Duration(milliseconds: 500),
+        ),
+      ],
+    ),
+    MessageTrack(
+      events: [
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(seconds: 2),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.red),
+          delay: const Duration(seconds: 3),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.purpleAccent),
+          delay: const Duration(milliseconds: 500),
+        ),
+      ],
+    ),
+    MessageTrack(
+      events: [
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.orange),
+          delay: const Duration(seconds: 10),
         ),
         MessageNode(
           lamps: const {},
@@ -186,74 +281,49 @@ class OrchestraTimeline extends StatefulWidget {
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.yellow),
-          delay: const Duration(seconds: 1),
+          message: ColorMessage.fromColor(Colors.indigoAccent),
+          delay: const Duration(milliseconds: 1900),
+        ),
+      ],
+    ),
+    MessageTrack(
+      events: [
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(milliseconds: 400),
         ),
         MessageNode(
           lamps: const {},
-          message: AnimationMessage(
-              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
-              AnimationSettingsConfig(
-                InterpolationType.linear,
-                TimeFactor.repeat,
-                0,
-                1,
-                0,
-              )),
-          delay: const Duration(seconds: 1),
-        )
-      ],
-    ),
-    ParentNode(
-      title: "Test",
-      events: [
-        MessageNode(
-          lamps: const {},
           message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(milliseconds: 500),
-        )
-      ],
-    ),
-    ParentNode(
-      title: "Test",
-      events: [
+          delay: const Duration(milliseconds: 600),
+        ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.blueGrey),
-          delay: const Duration(seconds: 10),
-        )
+          message: ColorMessage.fromColor(Colors.red),
+          delay: const Duration(milliseconds: 300),
+        ),
       ],
     ),
-    ParentNode(
-      title: "Test",
+    MessageTrack(
       events: [
         MessageNode(
           lamps: const {},
           message: ColorMessage.fromColor(Colors.red),
-          delay: const Duration(seconds: 90),
-        )
-      ],
-    ),
-    ParentNode(
-      title: "Test",
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blueAccent),
-          delay: const Duration(seconds: 10),
-        )
-      ],
-    ),
-    ParentNode(
-      title: "Test",
-      events: [
+          delay: const Duration(milliseconds: 100),
+        ),
         MessageNode(
           lamps: const {},
           message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(seconds: 10),
-        )
+          delay: const Duration(milliseconds: 100),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: ColorMessage.fromColor(Colors.blue),
+          delay: const Duration(milliseconds: 100),
+        ),
       ],
-    ),
+    )
   ];
   OrchestraTimeline({Key? key, this.play, this.onFinishPlay}) : super(key: key);
 
@@ -300,304 +370,435 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
     return Icons.collections_bookmark_outlined;
   }
 
+  MessageNodeExecutor? executor;
+
+  @override
+  void dispose() {
+    executor?.running = false;
+    scrollController.removeListener(() {});
+
+    scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       scrollController.addListener(() {
         setState(() {
+          widget.lastScrollPosition = widget.scrollPosition;
           widget.scrollPosition = scrollController.offset;
         });
+        var delta = widget.scrollPosition - widget.lastScrollPosition;
       });
     });
     widget.play = () {
-      print("OK LET'S GO!");
-      var messages = widget.nodes.expand((element) => element.events).toList();
       setState(() {
-        for (var node in widget.nodes) {
+        for (var node in widget.tracks) {
           node.status = EventStatus.NONE;
         }
       });
-      print(messages.length);
-      MessageNodeExecutor(widget.nodes,
-          onEventUpdate: (ev) => {
-                setState(() {
-                  widget.nodes[ev.index].status = ev.status;
-                })
-              },
-          onChildEventUpdate: (ev) {
-            setState(() {
-              widget.nodes[ev.parentIndex].events[ev.childIndex].status =
-                  ev.status;
-              widget.nodes[ev.parentIndex].events[ev.childIndex].progress =
-                  ev.progress;
-            });
-            Future.delayed(Duration.zero, () => setState(() {}));
-          }).execute(context).then((value) {
-        if (widget.restart) {
-          widget.play?.call();
-          return;
-        }
-        Future.delayed(const Duration(seconds: 1), () {
+      executor ??= MessageNodeExecutor(widget.tracks, onEventUpdate: (ev) {
+        if (mounted) {
           setState(() {
-            for (var node in widget.nodes) {
-              node.status = EventStatus.NONE;
-              for (var message in node.events) {
-                message.status = EventStatus.NONE;
-                message.progress = null;
-              }
-            }
+            widget.tracks[ev.index].status = ev.status;
           });
-          widget.onFinishPlay?.call();
-        });
+          if (ev.status == EventStatus.FINISHED) {
+            terminalController.text +=
+                "\n${ev.index} status set to ${ev.status}";
+          }
+        }
+      }, onChildEventUpdate: (ev) {
+        if (mounted) {
+          if (ev.status == EventStatus.RUNNING) {
+            terminalController.text +=
+                "\n${ev.parentIndex} sent message ${ev.childIndex}";
+          }
+        }
       });
+
+      executor?.execute(getScrollLocation()).then((value) {});
     };
   }
 
   int expandedTitle = -1;
   DragType dragType = DragType.GROUP;
   ScrollController scrollController = ScrollController();
+  TextEditingController terminalController = TextEditingController();
+  int getPlayTime() {
+    var playTimes = widget.tracks
+        .expand((e) => {
+              e.events
+                  .fold(0, (int sum, item) => sum + item.delay.inMilliseconds)
+            })
+        .toList();
+    return playTimes.reduce(max);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        /*Padding(
-          padding: EdgeInsets.only(bottom: 8),
-          child: Container(
-            width: 10000,
-            height: 128,
-            decoration: BoxDecoration(color: Colors.blue, boxShadow: [
-              BoxShadow(
-                color: Colors.black,
-                blurRadius: 2.0,
-                spreadRadius: 0.0,
-                offset: Offset(2.0, 2.0), // shadow direction: bottom right
-              ),
-            ]),
-          ),
-        ),*/
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-                onPressed: () => {
+    var menuItemHeight = widget.minTrackHeight + 2;
+    var menuActive = widget.scrollPosition <
+        MediaQuery.of(context).size.width / 2 - widget.menuWidth + 8;
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.running = false;
+                    });
+                    scrollController.animateTo(0,
+                        duration: Duration(milliseconds: 500),
+                        curve: Curves.ease);
+                  },
+                  icon: Icon(Icons.skip_previous)),
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.running = !widget.running;
+                    });
+                    if (widget.running) {
+                      // Play via executor
+                      setState(() {
+                        widget.showMenu = false;
+                      });
+                      widget.play?.call();
+                      scrollController
+                          .animateTo((getPlayTime()) * widget.zoomFactor,
+                              duration: Duration(
+                                  milliseconds: getPlayTime() -
+                                      getScrollLocation().inMilliseconds),
+                              curve: Curves.linear)
+                          .then((value) {
+                        if (mounted) {
+                          setState(() {
+                            widget.running = false;
+                            executor?.running = false;
+                          });
+                        }
+                      });
+                    } else {
+                      setState(() {
+                        widget.showMenu = true;
+                      });
                       scrollController.animateTo(0,
                           duration: Duration(milliseconds: 500),
-                          curve: Curves.ease)
-                    },
-                icon: Icon(Icons.skip_previous)),
-            IconButton(
-                onPressed: () => {
-                      scrollController.animateTo(500,
-                          duration: Duration(seconds: 10), curve: Curves.linear)
-                    },
-                icon: Icon(Icons.play_arrow))
-          ],
-        ),
-        GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onScaleStart: (details) {
-            setState(() {
-              widget.baseZoomFactor = widget.zoomFactor;
-            });
-          },
-          onScaleUpdate: (details) {
-            setState(() {
-              var zoom = widget.baseZoomFactor * details.scale;
-              zoom = max(widget.minZoomFactor, zoom);
-              zoom = min(widget.maxZoomFactor, zoom);
-              widget.zoomFactor = zoom;
-            });
-          },
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                reverse: false,
-                controller: scrollController,
-                scrollDirection: Axis.horizontal,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                      left: MediaQuery.of(context).size.width / 2,
-                      right: MediaQuery.of(context).size.width / 2),
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // SizedBox(
-                        //     width: 10000,
-                        //     height: 40,
-                        //     child: Ruler(
-                        //       zoom: widget.zoomFactor,
-                        //       totalSeconds: 20,
-                        //     )),
-                        ...widget.nodes
-                            .map((e) => Row(
-                                    children: e.events.map((message) {
-                                  var color = message.cardIndicator ==
-                                          CardIndicator.COLOR
-                                      ? message.toColor()
-                                      : null;
-                                  var gradient = message.cardIndicator ==
-                                          CardIndicator.GRADIENT
-                                      ? message.toGradient()
-                                      : null;
-                                  return Padding(
-                                    padding: const EdgeInsets.all(2),
-                                    child: Opacity(
-                                      opacity: message.isDragging
-                                          ? widget.opacityWhenDragging
-                                          : 1,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                            border: message.cardIndicator ==
-                                                    CardIndicator.PROGRESS
-                                                ? Border.all(
-                                                    width: 1,
-                                                    color: Theme.of(context)
-                                                        .primaryColorLight)
-                                                : null,
-                                            borderRadius:
-                                                BorderRadius.circular(8.0),
-                                            color: color,
-                                            gradient: gradient),
-                                        clipBehavior: Clip.antiAlias,
-                                        height: widget.cardHeight,
-                                        child: Container(
-                                          alignment: Alignment.center,
-                                          child: ListTile(
-                                            contentPadding:
-                                                const EdgeInsets.all(2),
-                                            leading: Draggable(
-                                              feedback: Container(
-                                                clipBehavior: Clip.antiAlias,
-                                                padding: EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8.0),
-                                                    color: color,
-                                                    gradient: gradient),
-                                                child: const Icon(
-                                                  Icons.drag_indicator,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                              childWhenDragging:
-                                                  const SizedBox(),
-                                              child: const Icon(
-                                                Icons.drag_indicator,
-                                                color: Colors.white,
-                                              ),
-                                              onDragStarted: () => {
-                                                setState(() {
-                                                  message.isDragging = true;
-                                                })
-                                              },
-                                              onDragEnd: (details) => {
-                                                setState(() {
-                                                  message.isDragging = false;
-                                                })
-                                              },
-                                              onDragUpdate: (data) => {},
-                                            ),
-                                            trailing: Draggable(
-                                              onDragUpdate: (data) => {
-                                                setState(() {
-                                                  var deltaMill =
-                                                      ((data.delta.dx ?? 0) ~/
-                                                              widget.zoomFactor)
-                                                          .toInt();
-                                                  message.delay += Duration(
-                                                      milliseconds: deltaMill);
-                                                })
-                                              },
-                                              feedback: const RotatedBox(
-                                                quarterTurns: 1,
-                                                child: Icon(
-                                                  Icons.drag_handle,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                              childWhenDragging:
-                                                  const SizedBox(),
-                                              axis: Axis.horizontal,
-                                              child: const RotatedBox(
-                                                quarterTurns: 1,
-                                                child: Icon(
-                                                  Icons.drag_handle,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                            title: Wrap(
-                                              alignment: WrapAlignment.start,
-                                              direction: Axis.horizontal,
-                                              spacing: double.maxFinite,
-                                              runAlignment:
-                                                  WrapAlignment.center,
-                                              crossAxisAlignment:
-                                                  WrapCrossAlignment.center,
-                                              children: [
-                                                Text(
-                                                  "${message.getTitle()} (${message.formatTime()}) ${message.isDragging})",
-                                                  style: const TextStyle(
-                                                      fontSize: 10,
-                                                      overflow: TextOverflow
-                                                          .ellipsis),
-                                                  maxLines: 1,
-                                                ),
-                                                Text(
-                                                  message.getSubtitleText(),
-                                                  style: const TextStyle(
-                                                      fontSize: 8,
-                                                      overflow: TextOverflow
-                                                          .ellipsis),
-                                                  maxLines: 1,
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        width: max(
-                                            message.delay.inMilliseconds *
-                                                    (widget.zoomFactor) -
-                                                4,
-                                            0),
-                                      ),
-                                    ),
-                                  );
-                                }).toList()))
-                            .toList()
-                      ]),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                    left: MediaQuery.of(context).size.width / 2 - 1,
-                    right: MediaQuery.of(context).size.width / 2 - 1),
-                child: SizedBox(
-                    height: 400,
-                    child: Container(
-                        decoration: BoxDecoration(
-                      border: Border(
-                          left: BorderSide(color: Colors.white, width: 2)),
-                    ))),
-              ),
+                          curve: Curves.ease);
+                    }
+                  },
+                  icon: Icon(widget.running ? Icons.stop : Icons.play_arrow))
             ],
           ),
-        ),
-        Text("ZoomFactor: ${widget.zoomFactor}, scroll: ${formatScrollTime()}"),
-        Slider(
-            value: widget.cardHeight,
-            min: 10,
-            max: 140,
-            onChanged: (v) => setState(() {
-                  widget.cardHeight = v;
-                }))
-      ],
+          Text(formatScrollTime(),
+              style: TextStyle(fontFeatures: [FontFeature.tabularFigures()])),
+          SizedBox(height: 10),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onScaleStart: (details) {
+              setState(() {
+                widget.baseZoomFactor = widget.zoomFactor;
+              });
+            },
+            onScaleUpdate: (details) {
+              setState(() {
+                var zoom = widget.baseZoomFactor * details.scale;
+                zoom = max(widget.minZoomFactor, zoom);
+                zoom = min(widget.maxZoomFactor, zoom);
+                var zoomDelta = widget.zoomFactor - zoom;
+                widget.zoomFactor = zoom;
+                var currentTime = scrollController.offset / widget.zoomFactor;
+                // TODO: Je weiter rechts sich die Animation befindet, desto mehr "lenkt" sie nach links
+                scrollController
+                    .jumpTo(scrollController.offset - zoomDelta * currentTime);
+              });
+            },
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  controller: scrollController,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        left: MediaQuery.of(context).size.width / 2,
+                        right: MediaQuery.of(context).size.width / 2),
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // SizedBox(
+                          //     width: 10000,
+                          //     height: 40,
+                          //     child: Ruler(
+                          //       zoom: widget.zoomFactor,
+                          //       totalSeconds: 20,
+                          //     )),
+                          ...widget.tracks
+                              .map((e) => Column(
+                                    children: [
+                                      Row(children: [
+                                        ...e.events.map((message) {
+                                          var color = message.cardIndicator ==
+                                                  CardIndicator.COLOR
+                                              ? message.toColor()
+                                              : message.cardIndicator ==
+                                                      CardIndicator.PROGRESS
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .surface
+                                                  : null;
+                                          var gradient =
+                                              message.cardIndicator ==
+                                                      CardIndicator.GRADIENT
+                                                  ? message.toGradient()
+                                                  : null;
+                                          return Opacity(
+                                            opacity: !e.active
+                                                ? widget.opacityWhenInactive
+                                                : message.isDragging
+                                                    ? widget.opacityWhenDragging
+                                                    : 1,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 2.0, bottom: 2.0),
+                                              child: InkWell(
+                                                onTap: (() => setState(() {
+                                                      message.isSelected =
+                                                          !message.isSelected;
+                                                    })),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                      border: message.isSelected
+                                                          ? Border.all(
+                                                              width: 2,
+                                                              color:
+                                                                  Colors.white)
+                                                          : null,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              2.0),
+                                                      color: color,
+                                                      gradient: gradient),
+                                                  clipBehavior: Clip.antiAlias,
+                                                  height: widget.cardHeight,
+                                                  child: Container(
+                                                    alignment: Alignment.center,
+                                                    child: ListTile(
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              2),
+                                                      title: Wrap(
+                                                        alignment:
+                                                            WrapAlignment.start,
+                                                        direction:
+                                                            Axis.horizontal,
+                                                        spacing:
+                                                            double.maxFinite,
+                                                        runAlignment:
+                                                            WrapAlignment
+                                                                .center,
+                                                        crossAxisAlignment:
+                                                            WrapCrossAlignment
+                                                                .center,
+                                                        children: [
+                                                          Text(
+                                                            "${message.getTitle()} (${message.formatTime()}) ${message.isDragging})",
+                                                            style: const TextStyle(
+                                                                fontSize: 10,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis),
+                                                            maxLines: 1,
+                                                          ),
+                                                          Text(
+                                                            message
+                                                                .getSubtitleText(),
+                                                            style: const TextStyle(
+                                                                fontSize: 8,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis),
+                                                            maxLines: 1,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  width: max(
+                                                      message.delay
+                                                                  .inMilliseconds *
+                                                              (widget
+                                                                  .zoomFactor) -
+                                                          2,
+                                                      0),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList()
+                                      ]),
+                                      Container(
+                                          height: max(
+                                              0,
+                                              widget.minTrackHeight -
+                                                  widget.cardHeight),
+                                          color: Colors.red),
+                                    ],
+                                  ))
+                              .toList(),
+                        ]),
+                  ),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width / 2,
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AnimatedContainer(
+                        duration: Duration(milliseconds: 250),
+                        curve: Curves.ease,
+                        width: menuActive ? widget.menuWidth : 0,
+                        child: Card(
+                          elevation: 32,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(4.0),
+                              topRight: Radius.circular(4.0),
+                            ),
+                          ),
+                          margin: EdgeInsets.only(right: 8),
+                          child: Column(children: [
+                            ...List.generate(
+                                    widget.maxTracks, (int index) => index)
+                                .map((e) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    height: menuItemHeight - 1,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.max,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        ClipRect(
+                                          child: Padding(
+                                            padding:
+                                                const EdgeInsets.only(left: 16),
+                                            child: Checkbox(
+                                                activeColor: Colors.green,
+                                                value: widget.tracks[e].active,
+                                                onChanged: (val) => {
+                                                      setState(() {
+                                                        widget.tracks[e]
+                                                            .active = val!;
+                                                      })
+                                                    }),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 16.0),
+                                          child: LampGroupChip(
+                                              name: widget.lampGroups[e]),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 1, child: Divider())
+                                ],
+                              );
+                            }),
+                            /*...List.generate(
+                                    widget.maxTracks, (int index) => index)
+                                .map((e) {
+                              if (e >= widget.tracks.length) {
+                                return Container(
+                                    height: menuItemHeight,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        IconButton(
+                                            onPressed: () => {},
+                                            icon: Icon(Icons.add))
+                                      ],
+                                    ));
+                              }
+                              var track = widget.tracks[e];
+                              return Container(
+                                  height: menuItemHeight,
+                                  alignment: Alignment.centerRight,
+                                  child: Column(
+                                    children: [
+                                      LampGroupChip(name: widget.lampGroups[e]),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Checkbox(
+                                              activeColor: Colors.green,
+                                              value: track.active,
+                                              onChanged: (i) => {
+                                                    setState(() {
+                                                      track.active =
+                                                          !track.active;
+                                                    })
+                                                  }),
+                                          IconButton(
+                                            icon: Icon(Icons.more_vert),
+                                            onPressed: () => {},
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(height: 1, thickness: 1)
+                                    ],
+                                  ));
+                            }).toList(),*/
+                          ]),
+                        )),
+                  ],
+                ),
+                Padding(
+                  padding: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width / 2 - 1,
+                      right: MediaQuery.of(context).size.width / 2 - 1),
+                  child: SizedBox(
+                      height: (menuItemHeight + 2) * widget.maxTracks - 2,
+                      child: Container(
+                          decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(.2),
+                            blurRadius: 4.0,
+                            spreadRadius: 0.0,
+                            offset: Offset(
+                                2.0, 2.0), // shadow direction: bottom right
+                          )
+                        ],
+                        border: Border(
+                            left: BorderSide(color: Colors.white, width: 2)),
+                      ))),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -607,40 +808,40 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
 
   String formatScrollTime() {
     var time = getScrollLocation();
-    var minutes = time.inMinutes.remainder(60).toString();
-    var seconds = time.inSeconds.remainder(60).toString();
-    var millis = time.inMilliseconds.remainder(1000).toString();
-    return "${minutes.padLeft(2, '0')}:${seconds.padLeft(2, '0')}:${millis.padLeft(4, '0')}";
+    var minutes = max(time.inMinutes.remainder(60), 0).toString();
+    var seconds = max(time.inSeconds.remainder(60), 0).toString();
+    var millis = max(time.inMilliseconds.remainder(1000) ~/ 10, 0).toString();
+    return "${minutes.padLeft(2, '0')}:${seconds.padLeft(2, '0')}:${millis.padLeft(2, '0')}";
   }
 
   bool hasReached(index) {
-    if (index > widget.nodes.length - 1) {
-      if (widget.nodes[widget.nodes.length - 1].status ==
+    if (index > widget.tracks.length - 1) {
+      if (widget.tracks[widget.tracks.length - 1].status ==
           EventStatus.FINISHED) {
         return true;
       }
       return false;
     }
-    return widget.nodes[index].status == EventStatus.RUNNING ||
-        widget.nodes[index].status == EventStatus.FINISHED;
+    return widget.tracks[index].status == EventStatus.RUNNING ||
+        widget.tracks[index].status == EventStatus.FINISHED;
   }
 
   bool isRunning(index) {
-    if (index > widget.nodes.length - 1) {
+    if (index > widget.tracks.length - 1) {
       return false;
     }
-    return widget.nodes[index].status == EventStatus.RUNNING;
+    return widget.tracks[index].status == EventStatus.RUNNING;
   }
 
   IconData getIcon(index) {
-    if (index > widget.nodes.length - 1) {
-      if (widget.nodes[widget.nodes.length - 1].status ==
+    if (index > widget.tracks.length - 1) {
+      if (widget.tracks[widget.tracks.length - 1].status ==
           EventStatus.FINISHED) {
         return Icons.checklist;
       }
       return Icons.flag;
     }
-    switch (widget.nodes[index].status) {
+    switch (widget.tracks[index].status) {
       case EventStatus.NONE:
         return Icons.arrow_downward;
       case EventStatus.PENDING:
@@ -653,14 +854,14 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   }
 
   Color getDotIndicatorColor(index) {
-    if (index > widget.nodes.length - 1) {
-      if (widget.nodes[widget.nodes.length - 1].status ==
+    if (index > widget.tracks.length - 1) {
+      if (widget.tracks[widget.tracks.length - 1].status ==
           EventStatus.FINISHED) {
         return Colors.green;
       }
       return Theme.of(context).colorScheme.background;
     }
-    switch (widget.nodes[index].status) {
+    switch (widget.tracks[index].status) {
       case EventStatus.PENDING:
         return Colors.blueGrey;
       case EventStatus.RUNNING:
@@ -934,7 +1135,6 @@ class InnerTimelineState extends State<InnerTimeline> {
                 })
               },
               onAccept: (MoveNodeEvent event) {
-                print(event.toString());
                 if (event.from.parentId != event.to.parentId) {
                   widget.onMoveNodeToOtherParent.call(event);
                 } else {
@@ -1126,7 +1326,6 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
     var newPosition = DragData(
         parentId: widget.parentId, index: newIndex, dragType: DragType.NODE);
     if (from.equals(newPosition)) {
-      print("Nothing changed");
       return null;
     }
     return newPosition;
@@ -1241,11 +1440,9 @@ class DraggableMessageNodeState extends State<DraggableMessageNode> {
                 index: newIndex,
                 dragType: DragType.NODE);
             if (data.equals(newPosition)) {
-              print("Nothing changed");
               return;
             }
             var event = MoveNodeEvent(from: data, to: newPosition);
-            print(event);
             widget.onAccept?.call(event);
           })
         },

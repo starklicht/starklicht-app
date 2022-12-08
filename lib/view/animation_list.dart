@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
-
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animations.dart';
+
 import '../i18n/animation_list.dart';
 
 class AnimationsWidget extends StatefulWidget {
@@ -343,7 +343,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                         },
                         child: Column(children: [
                           ListTile(
-                            contentPadding: const EdgeInsets.all(12),
+                            contentPadding: EdgeInsets.all(12),
                             leading: AnimationPreviewWidget(
                               settings: AnimationSettingsConfig(
                                   filteredAnimations()[realIndex]
@@ -368,8 +368,8 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                                       .toList()),
                               callback: null,
                               restartController: restartController,
-                              restartCallback: const {},
-                              notify: const {},
+                              restartCallback: {},
+                              notify: {},
                               isEditorPreview: false,
                               onAnimationsValidChanged: (val) => {},
                             ),
