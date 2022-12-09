@@ -9,8 +9,10 @@ import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/models.dart';
 import 'package:starklicht_flutter/view/animations.dart';
+import 'package:starklicht_flutter/view/time_picker.dart';
 import 'package:timelines/timelines.dart';
 
+import '../controller/starklicht_bluetooth_controller.dart';
 import '../messages/color_message.dart';
 import '../messages/imessage.dart';
 import '../model/orchestra.dart';
@@ -78,7 +80,8 @@ class MessageNodeExecutor {
     return continueProgram;
   }
 
-  Future<void> executeTrack(int trackIndex, Duration startTime) async {
+  Future<void> executeTrack(
+      int trackIndex, Duration startTime, List<String> lampGroups) async {
     var track = tracks[trackIndex];
     var queue = Queue<EventNode>();
     var millis = startTime.inMilliseconds;
@@ -110,7 +113,11 @@ class MessageNodeExecutor {
       currentIndex++;
       onChildEventUpdate?.call(
           ChildEventChanged(trackIndex, currentIndex, EventStatus.RUNNING));
-      message.execute();
+      // TODO: IMPORTANT! SEND ONLY TO SPECIFIC GROUPS!
+      if (message is MessageNode) {
+        BluetoothControllerWidget()
+            .broadcastToGroups(message.message, {lampGroups[trackIndex]});
+      }
       if (currentIndex == 0 && millis > 0) {
         await Future.delayed(Duration(milliseconds: firstSleepTime));
       } else {
@@ -122,10 +129,10 @@ class MessageNodeExecutor {
     onEventUpdate?.call(EventChanged(trackIndex, EventStatus.FINISHED));
   }
 
-  Future<void> execute(Duration startTime) async {
+  Future<void> execute(Duration startTime, List<String> lampGroups) async {
     tracks.asMap().forEach((index, value) {
       if (value.active) {
-        executeTrack(index, startTime);
+        executeTrack(index, startTime, lampGroups);
       }
     });
   }
@@ -485,11 +492,14 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
         }
       });
 
-      executor?.execute(getScrollLocation()).then((value) {});
+      executor
+          ?.execute(getScrollLocation(), widget.lampGroups)
+          .then((value) {});
     };
   }
 
   int expandedTitle = -1;
+  int addParentId = -1;
   DragType dragType = DragType.GROUP;
   ScrollController scrollController = ScrollController();
   TextEditingController terminalController = TextEditingController();
@@ -613,6 +623,12 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                               .map((e) => Column(
                                     children: [
                                       Row(children: [
+                                        if (e.events.isEmpty) ...[
+                                          SizedBox(
+                                              height: widget.cardHeights[widget
+                                                      .selectedCardHeight] +
+                                                  2)
+                                        ],
                                         ...e.events.map((message) {
                                           var color = message.cardIndicator ==
                                                   CardIndicator.COLOR
@@ -652,7 +668,8 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                                       animationDuration,
                                                       animationCurve,
                                                       max(
-                                                          message.delay.inMilliseconds *
+                                                          message.delay
+                                                                      .inMilliseconds *
                                                                   (widget
                                                                       .zoomFactor) -
                                                               2,
@@ -678,23 +695,81 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                                       color,
                                                       gradient,
                                                       elevated: true),
-                                                  child: getNode(
-                                                      animationDuration,
-                                                      animationCurve,
-                                                      max(
-                                                          message.delay.inMilliseconds *
-                                                                  (widget.zoomFactor) -
-                                                              2,
-                                                          0),
-                                                      !e.active
-                                                          ? widget.opacityWhenInactive
-                                                          : message.isDragging
-                                                              ? widget.opacityWhenDragging
-                                                              : 1,
-                                                      e,
-                                                      message,
-                                                      color,
-                                                      gradient)),
+                                                  child: InkWell(
+                                                    child: getNode(
+                                                        animationDuration,
+                                                        animationCurve,
+                                                        max(
+                                                            message.delay
+                                                                        .inMilliseconds *
+                                                                    (widget
+                                                                        .zoomFactor) -
+                                                                2,
+                                                            0),
+                                                        !e.active
+                                                            ? widget
+                                                                .opacityWhenInactive
+                                                            : message.isDragging
+                                                                ? widget
+                                                                    .opacityWhenDragging
+                                                                : 1,
+                                                        e,
+                                                        message,
+                                                        color,
+                                                        gradient),
+                                                    onTap: () => {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (_) {
+                                                            var currentDur = Duration(
+                                                                milliseconds:
+                                                                    message
+                                                                        .delay
+                                                                        .inMilliseconds);
+                                                            return AlertDialog(
+                                                              title: Text(
+                                                                  "Zeit bearbeiten"),
+                                                              scrollable: false,
+                                                              content:
+                                                                  Container(
+                                                                height: 200,
+                                                                child: TimePicker(
+                                                                    startDuration:
+                                                                        currentDur,
+                                                                    onChanged:
+                                                                        (dur) =>
+                                                                            {
+                                                                              currentDur = dur
+                                                                            }),
+                                                              ),
+                                                              actions: [
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () => {
+                                                                              Navigator.pop(context)
+                                                                            },
+                                                                    child: Text(
+                                                                      "Abbrechen",
+                                                                    )),
+                                                                TextButton(
+                                                                    onPressed:
+                                                                        () {
+                                                                      setState(
+                                                                          () {
+                                                                        message.delay =
+                                                                            currentDur;
+                                                                      });
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    },
+                                                                    child: Text(
+                                                                      "Anwenden",
+                                                                    ))
+                                                              ],
+                                                            );
+                                                          })
+                                                    },
+                                                  )),
                                               if (true) ...[
                                                 Row(
                                                   children: [
@@ -786,12 +861,23 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                                               .events
                                                               .removeAt(
                                                                   data.index);
+                                                          var newIndex = min(
+                                                              data.parentId ==
+                                                                      me
+                                                                          .parentId
+                                                                  ? me.index
+                                                                  : me.index +
+                                                                      1,
+                                                              widget
+                                                                  .tracks[me
+                                                                      .parentId]
+                                                                  .events
+                                                                  .length);
                                                           widget
                                                               .tracks[
                                                                   me.parentId]
                                                               .events
-                                                              .insert(
-                                                                  me.index + 1,
+                                                              .insert(newIndex,
                                                                   obj);
                                                         });
                                                       },
@@ -814,6 +900,18 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                             ],
                                           );
                                         }).toList(),
+                                        SizedBox(
+                                          height: widget.cardHeights[
+                                              widget.selectedCardHeight],
+                                          width: 32,
+                                          child: IconButton(
+                                              iconSize: 12,
+                                              onPressed: () {
+                                                openAddDialog(context, setState,
+                                                    widget.tracks.indexOf(e));
+                                              },
+                                              icon: Icon(Icons.add)),
+                                        )
                                       ]),
                                     ],
                                   ))
@@ -932,10 +1030,186 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
               })
             },
             borderRadius: const BorderRadius.all(Radius.circular(10)),
+          ),
+          SizedBox(height: 20),
+          AnimatedOpacity(
+            opacity: widget.isDragging ? 1 : 0,
+            duration: animationDuration,
+            curve: animationCurve,
+            child: DragTarget<DragData>(
+              builder: ((context, candidateData, rejectedData) => Icon(
+                    candidateData.length > 0
+                        ? Icons.delete_forever
+                        : Icons.delete,
+                    size: 32,
+                    color: Theme.of(context).colorScheme.error,
+                  )),
+              onWillAccept: (data) {
+                return true;
+              },
+              onAccept: (data) {
+                setState(() {
+                  var snackBar = SnackBar(
+                    content: Text('Element wurde gelöscht.'),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  widget.tracks[data.parentId].events.removeAt(data.index);
+                });
+              },
+            ),
           )
         ],
       ),
     );
+  }
+
+  List<AnimationMessage> _animationStore = [];
+  var _messageType = MessageType.brightness;
+  var _currentBrightness = 100.0;
+  var _currentColor = Colors.white;
+
+  void openAddDialog(BuildContext context, StateSetter setState, int parentId) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          Persistence()
+              .getAnimationStore()
+              .then((value) => _animationStore = value);
+          int? selectedAnimation = 0;
+          return StatefulBuilder(
+              builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              scrollable: true,
+              title: const Text("Zeitevent hinzufügen"),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // TODO Export this into an own fucker
+                  RadioListTile<MessageType>(
+                      value: MessageType.brightness,
+                      title: const Text("Helligkeit"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  RadioListTile<MessageType>(
+                      value: MessageType.color,
+                      title: const Text("Farbe"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  RadioListTile<MessageType>(
+                      value: MessageType.interpolated,
+                      title: const Text("Animation"),
+                      groupValue: _messageType,
+                      onChanged: (value) => {
+                            setState(() {
+                              _messageType = value!;
+                            })
+                          }),
+                  if (_messageType == MessageType.brightness) ...[
+                    Text("Helligkeit bestimmen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    Column(
+                      children: [
+                        Slider(
+                          max: 100,
+                          onChangeEnd: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          onChanged: (d) => {
+                            setState(() {
+                              _currentBrightness = d;
+                            }),
+                          },
+                          value: _currentBrightness,
+                        ),
+                        Text(
+                          "${_currentBrightness.toInt()}%",
+                          style: const TextStyle(fontSize: 32),
+                        )
+                      ],
+                    )
+                  ] else if (_messageType == MessageType.color) ...[
+                    Text("Farbe auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    ColorsWidget(
+                      startColor: _currentColor,
+                      onChanged: (c) => {
+                        setState(() {
+                          _currentColor = c;
+                        })
+                      },
+                    )
+                  ] else if (_messageType == MessageType.interpolated) ...[
+                    Text("Animation aus Liste auswählen".toUpperCase(),
+                        style: Theme.of(context).textTheme.overline),
+                    // Persistence
+                    DropdownButton<int>(
+                      items: _animationStore
+                          .mapIndexed((animation, index) =>
+                              DropdownMenuItem<int>(
+                                  value: index, child: Text(animation.title!)))
+                          .toList(),
+                      onChanged: (i) => {
+                        setState(() {
+                          selectedAnimation = i;
+                        })
+                      },
+                      value: selectedAnimation,
+                    )
+                  ]
+                ],
+              ),
+              actions: [
+                TextButton(
+                    child: const Text("Abbrechen"),
+                    onPressed: () => {Navigator.pop(context)}),
+                TextButton(
+                    child: const Text("Hinzufügen"),
+                    onPressed: () {
+                      setState(() {
+                        // TODO: Implement factory pattern
+                        IBluetoothMessage? message;
+                        if (_messageType == MessageType.color) {
+                          message = ColorMessage.fromColor(_currentColor);
+                        } else if (_messageType == MessageType.brightness) {
+                          message =
+                              BrightnessMessage(_currentBrightness.toInt());
+                        }
+                        if (_messageType == MessageType.interpolated) {
+                          if (selectedAnimation != null) {
+                            message = _animationStore[selectedAnimation!];
+                          }
+                        }
+                        if (message == null) {
+                          return;
+                        }
+                        setState(() {
+                          widget.tracks[parentId].events.add(MessageNode(
+                              lamps: const {},
+                              message: message!,
+                              delay: Duration(seconds: 1)));
+                        });
+                      });
+                      refresh();
+                      Navigator.pop(context);
+                    })
+              ],
+            );
+          });
+        });
+  }
+
+  void refresh() {
+    setState(() {});
   }
 
   Duration getScrollLocation() {
