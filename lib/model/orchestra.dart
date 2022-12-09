@@ -215,9 +215,9 @@ class MessageNode extends EventNode {
   String getSubtitleText() {
     switch (message.messageType) {
       case MessageType.color:
-        return "Setze die Farbe ${message.retrieveText()}";
+        return "Farbe: ${message.retrieveText()}";
       case MessageType.interpolated:
-        return "Spiele die Animation ${message.retrieveText()}";
+        return "Animation: ${message.retrieveText()}";
 
       case MessageType.request:
         break;
@@ -226,7 +226,7 @@ class MessageNode extends EventNode {
       case MessageType.poti:
         break;
       case MessageType.brightness:
-        return "Setze die Helligkeit auf ${message.retrieveText()}";
+        return "Helligkeit: ${message.retrieveText()}";
       case MessageType.save:
         break;
       case MessageType.clear:
@@ -288,7 +288,8 @@ class LampGroupChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
+    return ActionChip(
+      onPressed: () => {},
       clipBehavior: Clip.hardEdge,
       avatar: CircleAvatar(
         child: getAvatar(name),
@@ -296,7 +297,6 @@ class LampGroupChip extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
       label: Text(name.capitalize()),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 }

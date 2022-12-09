@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
@@ -138,7 +139,10 @@ class OrchestraTimeline extends StatefulWidget {
   var scrollPosition = 0.0;
   var lastScrollPosition = 0.0;
   var cardHeight = 80.0;
-  var minTrackHeight = 80.0;
+  var cardHeights = [40.0, 60.0, 80.0];
+  int selectedCardHeight = 0;
+  var minTrackHeight = 40.0;
+  var isDragging = false;
   var minZoomFactor = .02;
   var maxZoomFactor = 1.0;
   var restart = false;
@@ -381,6 +385,69 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
     super.dispose();
   }
 
+  Widget getNode(
+      Duration animationDuration,
+      Curve animationCurve,
+      double width,
+      double opacity,
+      MessageTrack e,
+      EventNode message,
+      Color? color,
+      Gradient? gradient,
+      {bool elevated = false}) {
+    return AnimatedOpacity(
+      duration: animationDuration,
+      curve: animationCurve,
+      opacity: opacity,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 2.0, bottom: 2.0),
+        child: SizedBox(
+          width: width,
+          child: Card(
+            elevation: elevated ? 8 : null,
+            margin: EdgeInsets.zero,
+            clipBehavior: Clip.antiAlias,
+            child: AnimatedContainer(
+              duration: animationDuration,
+              curve: animationCurve,
+              decoration: BoxDecoration(
+                  border: message.isSelected ? null : null,
+                  borderRadius: BorderRadius.circular(2.0),
+                  color: color,
+                  gradient: gradient),
+              clipBehavior: Clip.antiAlias,
+              height: widget.cardHeights[widget.selectedCardHeight],
+              child: Container(
+                alignment: Alignment.center,
+                child: Wrap(
+                  alignment: WrapAlignment.start,
+                  direction: Axis.horizontal,
+                  spacing: double.maxFinite,
+                  runAlignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      "${message.getTitle()} (${message.formatTime()})",
+                      style: const TextStyle(
+                          fontSize: 10, overflow: TextOverflow.ellipsis),
+                      maxLines: 1,
+                    ),
+                    Text(
+                      message.getSubtitleText(),
+                      style: const TextStyle(
+                          fontSize: 8, overflow: TextOverflow.ellipsis),
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -436,11 +503,23 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
     return playTimes.reduce(max);
   }
 
+  Offset myOffset(
+      Draggable<Object> draggable, BuildContext context, Offset position) {
+    final RenderBox renderObject = context.findRenderObject()! as RenderBox;
+    var pos = renderObject.globalToLocal(position);
+    return Offset(0, pos.dy);
+  }
+
   @override
   Widget build(BuildContext context) {
-    var menuItemHeight = widget.minTrackHeight + 2;
+    var animationDuration = Duration(milliseconds: 500);
+    var animationCurve = Curves.ease;
+    var menuItemHeight = max(widget.minTrackHeight,
+            widget.cardHeights[widget.selectedCardHeight]) +
+        2;
     var menuActive = widget.scrollPosition <
-        MediaQuery.of(context).size.width / 2 - widget.menuWidth + 8;
+            MediaQuery.of(context).size.width / 2 - widget.menuWidth + 8 &&
+        !widget.isDragging;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -456,8 +535,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                       widget.running = false;
                     });
                     scrollController.animateTo(0,
-                        duration: Duration(milliseconds: 500),
-                        curve: Curves.ease);
+                        duration: animationDuration, curve: animationCurve);
                   },
                   icon: Icon(Icons.skip_previous)),
               IconButton(
@@ -490,8 +568,7 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                         widget.showMenu = true;
                       });
                       scrollController.animateTo(0,
-                          duration: Duration(milliseconds: 500),
-                          curve: Curves.ease);
+                          duration: animationDuration, curve: animationCurve);
                     }
                   },
                   icon: Icon(widget.running ? Icons.stop : Icons.play_arrow))
@@ -532,13 +609,6 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                     child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // SizedBox(
-                          //     width: 10000,
-                          //     height: 40,
-                          //     child: Ruler(
-                          //       zoom: widget.zoomFactor,
-                          //       totalSeconds: 20,
-                          //     )),
                           ...widget.tracks
                               .map((e) => Column(
                                     children: [
@@ -558,97 +628,193 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                                                       CardIndicator.GRADIENT
                                                   ? message.toGradient()
                                                   : null;
-                                          return Opacity(
-                                            opacity: !e.active
-                                                ? widget.opacityWhenInactive
-                                                : message.isDragging
-                                                    ? widget.opacityWhenDragging
-                                                    : 1,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 2.0, bottom: 2.0),
-                                              child: InkWell(
-                                                onTap: (() => setState(() {
-                                                      message.isSelected =
-                                                          !message.isSelected;
-                                                    })),
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                      border: message.isSelected
-                                                          ? Border.all(
-                                                              width: 2,
-                                                              color:
-                                                                  Colors.white)
-                                                          : null,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2.0),
-                                                      color: color,
-                                                      gradient: gradient),
-                                                  clipBehavior: Clip.antiAlias,
-                                                  height: widget.cardHeight,
-                                                  child: Container(
-                                                    alignment: Alignment.center,
-                                                    child: ListTile(
-                                                      contentPadding:
-                                                          const EdgeInsets.all(
-                                                              2),
-                                                      title: Wrap(
-                                                        alignment:
-                                                            WrapAlignment.start,
-                                                        direction:
-                                                            Axis.horizontal,
-                                                        spacing:
-                                                            double.maxFinite,
-                                                        runAlignment:
-                                                            WrapAlignment
-                                                                .center,
-                                                        crossAxisAlignment:
-                                                            WrapCrossAlignment
-                                                                .center,
-                                                        children: [
-                                                          Text(
-                                                            "${message.getTitle()} (${message.formatTime()}) ${message.isDragging})",
-                                                            style: const TextStyle(
-                                                                fontSize: 10,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis),
-                                                            maxLines: 1,
-                                                          ),
-                                                          Text(
-                                                            message
-                                                                .getSubtitleText(),
-                                                            style: const TextStyle(
-                                                                fontSize: 8,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis),
-                                                            maxLines: 1,
-                                                          ),
-                                                        ],
+                                          return Stack(
+                                            children: [
+                                              LongPressDraggable<DragData>(
+                                                  data: DragData(
+                                                      parentId: widget.tracks
+                                                          .indexOf(e),
+                                                      index: e.events
+                                                          .indexOf(message),
+                                                      dragType: DragType.NODE),
+                                                  onDragStarted: () =>
+                                                      setState(() {
+                                                        widget.isDragging =
+                                                            true;
+                                                      }),
+                                                  onDragEnd: (details) =>
+                                                      setState(() {
+                                                        widget.isDragging =
+                                                            false;
+                                                      }),
+                                                  dragAnchorStrategy: myOffset,
+                                                  childWhenDragging: getNode(
+                                                      animationDuration,
+                                                      animationCurve,
+                                                      max(
+                                                          message.delay.inMilliseconds *
+                                                                  (widget
+                                                                      .zoomFactor) -
+                                                              2,
+                                                          0),
+                                                      .2,
+                                                      e,
+                                                      message,
+                                                      color,
+                                                      gradient),
+                                                  feedback: getNode(
+                                                      animationDuration,
+                                                      animationCurve,
+                                                      150,
+                                                      !e.active
+                                                          ? widget
+                                                              .opacityWhenInactive
+                                                          : message.isDragging
+                                                              ? widget
+                                                                  .opacityWhenDragging
+                                                              : 1,
+                                                      e,
+                                                      message,
+                                                      color,
+                                                      gradient,
+                                                      elevated: true),
+                                                  child: getNode(
+                                                      animationDuration,
+                                                      animationCurve,
+                                                      max(
+                                                          message.delay.inMilliseconds *
+                                                                  (widget.zoomFactor) -
+                                                              2,
+                                                          0),
+                                                      !e.active
+                                                          ? widget.opacityWhenInactive
+                                                          : message.isDragging
+                                                              ? widget.opacityWhenDragging
+                                                              : 1,
+                                                      e,
+                                                      message,
+                                                      color,
+                                                      gradient)),
+                                              if (true) ...[
+                                                Row(
+                                                  children: [
+                                                    IgnorePointer(
+                                                      child: SizedBox(
+                                                        height: widget
+                                                                    .cardHeights[
+                                                                widget
+                                                                    .selectedCardHeight] -
+                                                            2,
+                                                        width: max(
+                                                            message.delay
+                                                                        .inMilliseconds *
+                                                                    widget
+                                                                        .zoomFactor -
+                                                                2,
+                                                            0),
                                                       ),
                                                     ),
-                                                  ),
-                                                  width: max(
-                                                      message.delay
-                                                                  .inMilliseconds *
-                                                              (widget
-                                                                  .zoomFactor) -
-                                                          2,
-                                                      0),
-                                                ),
-                                              ),
-                                            ),
+                                                    DragTarget<DragData>(
+                                                      builder:
+                                                          (BuildContext context,
+                                                              List<DragData?>
+                                                                  accepted,
+                                                              List<dynamic>
+                                                                  rejected) {
+                                                        return AnimatedContainer(
+                                                          duration:
+                                                              animationDuration,
+                                                          curve: animationCurve,
+                                                          height: widget
+                                                                      .cardHeights[
+                                                                  widget
+                                                                      .selectedCardHeight] -
+                                                              2,
+                                                          child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                          .only(
+                                                                      left: 2,
+                                                                      right: 2),
+                                                              child: DottedBorder(
+                                                                  padding: EdgeInsets.zero,
+                                                                  borderType: BorderType.RRect,
+                                                                  radius: Radius.circular(2),
+                                                                  color: widget.isDragging
+                                                                      ? accepted.isEmpty
+                                                                          ? Theme.of(context).colorScheme.primary
+                                                                          : Colors.green
+                                                                      : Colors.transparent,
+                                                                  child: ClipRRect(
+                                                                    borderRadius:
+                                                                        BorderRadius.all(
+                                                                            Radius.circular(2)),
+                                                                    child:
+                                                                        Container(
+                                                                      color: accepted
+                                                                              .isEmpty
+                                                                          ? Theme.of(context)
+                                                                              .colorScheme
+                                                                              .primary
+                                                                              .withOpacity(
+                                                                                  .25)
+                                                                          : Colors
+                                                                              .green
+                                                                              .withOpacity(.25),
+                                                                    ),
+                                                                  ))),
+                                                          width:
+                                                              widget.isDragging
+                                                                  ? 40
+                                                                  : 0,
+                                                        );
+                                                      },
+                                                      onAccept: (data) {
+                                                        var me = DragData(
+                                                            dragType:
+                                                                DragType.NODE,
+                                                            index: e.events
+                                                                .indexOf(
+                                                                    message),
+                                                            parentId: widget
+                                                                .tracks
+                                                                .indexOf(e));
+                                                        setState(() {
+                                                          var obj = widget
+                                                              .tracks[
+                                                                  data.parentId]
+                                                              .events
+                                                              .removeAt(
+                                                                  data.index);
+                                                          widget
+                                                              .tracks[
+                                                                  me.parentId]
+                                                              .events
+                                                              .insert(
+                                                                  me.index + 1,
+                                                                  obj);
+                                                        });
+                                                      },
+                                                      onWillAccept: (data) {
+                                                        var me = DragData(
+                                                            dragType:
+                                                                DragType.NODE,
+                                                            index: e.events
+                                                                .indexOf(
+                                                                    message),
+                                                            parentId: widget
+                                                                .tracks
+                                                                .indexOf(e));
+                                                        return !me.equals(data);
+                                                      },
+                                                    ),
+                                                  ],
+                                                )
+                                              ]
+                                            ],
                                           );
-                                        }).toList()
+                                        }).toList(),
                                       ]),
-                                      Container(
-                                          height: max(
-                                              0,
-                                              widget.minTrackHeight -
-                                                  widget.cardHeight),
-                                          color: Colors.red),
                                     ],
                                   ))
                               .toList(),
@@ -674,102 +840,51 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                             ),
                           ),
                           margin: EdgeInsets.only(right: 8),
-                          child: Column(children: [
-                            ...List.generate(
-                                    widget.maxTracks, (int index) => index)
-                                .map((e) {
-                              return Column(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  SizedBox(
-                                    height: menuItemHeight - 1,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.max,
+                                  ...List.generate(widget.maxTracks,
+                                      (int index) => index).map((e) {
+                                    return Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
                                       children: [
-                                        ClipRect(
-                                          child: Padding(
-                                            padding:
-                                                const EdgeInsets.only(left: 16),
-                                            child: Checkbox(
-                                                activeColor: Colors.green,
-                                                value: widget.tracks[e].active,
-                                                onChanged: (val) => {
-                                                      setState(() {
-                                                        widget.tracks[e]
-                                                            .active = val!;
-                                                      })
-                                                    }),
+                                        AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 800),
+                                          curve: animationCurve,
+                                          height: menuItemHeight - 1,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Checkbox(
+                                                  activeColor: Colors.green,
+                                                  value:
+                                                      widget.tracks[e].active,
+                                                  onChanged: (val) => {
+                                                        setState(() {
+                                                          widget.tracks[e]
+                                                              .active = val!;
+                                                        })
+                                                      }),
+                                              LampGroupChip(
+                                                  name: widget.lampGroups[e]),
+                                            ],
                                           ),
                                         ),
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 16.0),
-                                          child: LampGroupChip(
-                                              name: widget.lampGroups[e]),
-                                        ),
+                                        const SizedBox(
+                                            height: 1, child: Divider())
                                       ],
-                                    ),
-                                  ),
-                                  SizedBox(height: 1, child: Divider())
-                                ],
-                              );
-                            }),
-                            /*...List.generate(
-                                    widget.maxTracks, (int index) => index)
-                                .map((e) {
-                              if (e >= widget.tracks.length) {
-                                return Container(
-                                    height: menuItemHeight,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                            onPressed: () => {},
-                                            icon: Icon(Icons.add))
-                                      ],
-                                    ));
-                              }
-                              var track = widget.tracks[e];
-                              return Container(
-                                  height: menuItemHeight,
-                                  alignment: Alignment.centerRight,
-                                  child: Column(
-                                    children: [
-                                      LampGroupChip(name: widget.lampGroups[e]),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Checkbox(
-                                              activeColor: Colors.green,
-                                              value: track.active,
-                                              onChanged: (i) => {
-                                                    setState(() {
-                                                      track.active =
-                                                          !track.active;
-                                                    })
-                                                  }),
-                                          IconButton(
-                                            icon: Icon(Icons.more_vert),
-                                            onPressed: () => {},
-                                          ),
-                                        ],
-                                      ),
-                                      Divider(height: 1, thickness: 1)
-                                    ],
-                                  ));
-                            }).toList(),*/
-                          ]),
+                                    );
+                                  }),
+                                ]),
+                          ),
                         )),
                   ],
                 ),
@@ -777,8 +892,10 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                   padding: EdgeInsets.only(
                       left: MediaQuery.of(context).size.width / 2 - 1,
                       right: MediaQuery.of(context).size.width / 2 - 1),
-                  child: SizedBox(
-                      height: (menuItemHeight + 2) * widget.maxTracks - 2,
+                  child: AnimatedContainer(
+                      duration: animationDuration,
+                      curve: animationCurve,
+                      height: (menuItemHeight + 2) * widget.maxTracks - 16,
                       child: Container(
                           decoration: BoxDecoration(
                         boxShadow: [
@@ -797,6 +914,25 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
               ],
             ),
           ),
+          SizedBox(height: 20),
+          ToggleButtons(
+            isSelected: [
+              widget.selectedCardHeight == 0,
+              widget.selectedCardHeight == 1,
+              widget.selectedCardHeight == 2
+            ],
+            children: [
+              Icon(Icons.density_small),
+              Icon(Icons.density_medium),
+              Icon(Icons.density_large)
+            ],
+            onPressed: (i) => {
+              setState(() {
+                widget.selectedCardHeight = i;
+              })
+            },
+            borderRadius: const BorderRadius.all(Radius.circular(10)),
+          )
         ],
       ),
     );
@@ -933,6 +1069,11 @@ class DragData {
           dragType == other.dragType;
     }
     return false;
+  }
+
+  @override
+  String toString() {
+    return "parent: ${parentId} id: ${index}";
   }
 }
 
