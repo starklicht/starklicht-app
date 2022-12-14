@@ -1,16 +1,9 @@
 /// Flutter code sample for BottomNavigationBar
-
-// This example shows a [BottomNavigationBar] as it is used within a [Scaffold]
-// widget. The [BottomNavigationBar] has three [BottomNavigationBarItem]
-// widgets, which means it defaults to [BottomNavigationBarType.fixed], and
-// the [currentIndex] is set to index 0. The selected item is
-// amber. The `_onItemTapped` function changes the selected item's index
-// and displays a corresponding message in the center of the [Scaffold].
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import "package:i18n_extension/i18n_widget.dart";
 import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/messages/save_message.dart';
@@ -18,10 +11,9 @@ import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/animation_list.dart';
 import 'package:starklicht_flutter/view/colors.dart';
 import 'package:starklicht_flutter/view/connections.dart';
-import "package:i18n_extension/i18n_widget.dart";
 import 'package:starklicht_flutter/view/orchestra_list_view.dart';
-import "i18n/main.dart";
 
+import "i18n/main.dart";
 import 'view/animations.dart';
 
 void main() => runApp(const MyApp());
@@ -71,7 +63,7 @@ class MyApp extends StatelessWidget {
 /// This is the stateful widget that the main application instantiates.
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
-  final bool showOrchestra = true;
+  final bool showOrchestra = false;
 
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
