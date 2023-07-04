@@ -23,6 +23,7 @@ extension Localization on String {
       {"de_de": 'Ausbreiten', "en_us": 'Space between'} +
       {"de_de": "%s Millisekunden", "en_us": "%s milliseconds"} +
       {"de_de": "Dauer", "en_us": "Duration"} +
+      {"de_de": "Dauer: ", "en_us": "Duration: "} +
       {"de_de": "Zeitfaktor: ", "en_us": "Time factor: "} +
       {"de_de": "Schleife", "en_us": "Loop"} +
       {"de_de": "Ping Pong", "en_us": "Ping Pong"} +

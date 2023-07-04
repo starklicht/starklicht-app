@@ -2,8 +2,8 @@ import 'dart:collection';
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:starklicht_flutter/messages/animation_message.dart';
 import 'package:starklicht_flutter/messages/brightness_message.dart';
 import 'package:starklicht_flutter/model/enums.dart';
@@ -140,7 +140,7 @@ class MessageNodeExecutor {
 
 class OrchestraTimeline extends StatefulWidget {
   var running = false;
-  var zoomFactor = 0.2;
+  var zoomFactor = 1.0;
   var baseZoomFactor = 0.2;
 
   var scrollPosition = 0.0;
@@ -155,19 +155,11 @@ class OrchestraTimeline extends StatefulWidget {
   var restart = false;
   var opacityWhenDragging = .5;
   var opacityWhenInactive = .25;
-  var maxTracks = 7;
+  var maxTracks = 3;
   VoidCallback? play;
   VoidCallback? onFinishPlay;
 
-  var lampGroups = [
-    "fill",
-    "key",
-    "back",
-    "atmosphere",
-    "effect",
-    "spot",
-    "ambient"
-  ];
+  var lampGroups = ["fill", "key", "back"];
 
   var showMenu = true;
   double menuWidth = 180.0;
@@ -196,27 +188,132 @@ class OrchestraTimeline extends StatefulWidget {
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.yellow),
-          delay: const Duration(seconds: 2, milliseconds: 500),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blue),
-          delay: const Duration(seconds: 1, milliseconds: 200),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(seconds: 10),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.cyan),
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
           delay: const Duration(seconds: 1),
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.teal),
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
+        ),
+        MessageNode(
+          lamps: const {},
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
           delay: const Duration(seconds: 1),
         ),
       ],
@@ -225,116 +322,27 @@ class OrchestraTimeline extends StatefulWidget {
       events: [
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.blue),
-          delay: const Duration(seconds: 4),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.lightBlue),
-          delay: const Duration(seconds: 5),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blueGrey),
-          delay: const Duration(milliseconds: 600),
-        ),
-      ],
-    ),
-    MessageTrack(
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.yellow),
-          delay: const Duration(seconds: 2),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(seconds: 3),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.yellow),
-          delay: const Duration(milliseconds: 500),
-        ),
-      ],
-    ),
-    MessageTrack(
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blue),
-          delay: const Duration(seconds: 2),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.red),
-          delay: const Duration(seconds: 3),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.purpleAccent),
-          delay: const Duration(milliseconds: 500),
-        ),
-      ],
-    ),
-    MessageTrack(
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.orange),
-          delay: const Duration(seconds: 10),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.purpleAccent),
+          message: BrightnessMessage(10),
           delay: const Duration(seconds: 1),
         ),
         MessageNode(
           lamps: const {},
-          message: ColorMessage.fromColor(Colors.indigoAccent),
-          delay: const Duration(milliseconds: 1900),
+          message: AnimationMessage(
+              [ColorPoint(Colors.red, 0), ColorPoint(Colors.blue, 1)],
+              AnimationSettingsConfig(
+                InterpolationType.linear,
+                TimeFactor.repeat,
+                0,
+                1,
+                0,
+              )),
+          delay: const Duration(seconds: 1),
         ),
       ],
     ),
     MessageTrack(
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blue),
-          delay: const Duration(milliseconds: 400),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(milliseconds: 600),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.red),
-          delay: const Duration(milliseconds: 300),
-        ),
-      ],
+      events: [],
     ),
-    MessageTrack(
-      events: [
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.red),
-          delay: const Duration(milliseconds: 100),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.green),
-          delay: const Duration(milliseconds: 100),
-        ),
-        MessageNode(
-          lamps: const {},
-          message: ColorMessage.fromColor(Colors.blue),
-          delay: const Duration(milliseconds: 100),
-        ),
-      ],
-    )
   ];
   OrchestraTimeline({Key? key, this.play, this.onFinishPlay}) : super(key: key);
 
@@ -459,10 +467,10 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      scrollController.addListener(() {
+      offsetListener.changes.listen((currentOffset) {
         setState(() {
           widget.lastScrollPosition = widget.scrollPosition;
-          widget.scrollPosition = scrollController.offset;
+          widget.scrollPosition += currentOffset;
         });
         var delta = widget.scrollPosition - widget.lastScrollPosition;
       });
@@ -502,6 +510,9 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
   int addParentId = -1;
   DragType dragType = DragType.GROUP;
   ScrollController scrollController = ScrollController();
+  ScrollOffsetListener offsetListener = ScrollOffsetListener.create();
+  ScrollOffsetController offsetController = ScrollOffsetController();
+  ScrollOffsetController offsetController2 = ScrollOffsetController();
   TextEditingController terminalController = TextEditingController();
   int getPlayTime() {
     var playTimes = widget.tracks
@@ -544,8 +555,8 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                     setState(() {
                       widget.running = false;
                     });
-                    scrollController.animateTo(0,
-                        duration: animationDuration, curve: animationCurve);
+                    offsetController.animateScroll(
+                        offset: 0, duration: animationDuration);
                   },
                   icon: Icon(Icons.skip_previous)),
               IconButton(
@@ -559,8 +570,9 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                         widget.showMenu = false;
                       });
                       widget.play?.call();
-                      scrollController
-                          .animateTo((getPlayTime()) * widget.zoomFactor,
+                      offsetController
+                          .animateScroll(
+                              offset: (getPlayTime()) * widget.zoomFactor,
                               duration: Duration(
                                   milliseconds: getPlayTime() -
                                       getScrollLocation().inMilliseconds),
@@ -577,8 +589,10 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                       setState(() {
                         widget.showMenu = true;
                       });
-                      scrollController.animateTo(0,
-                          duration: animationDuration, curve: animationCurve);
+                      offsetController.animateScroll(
+                          offset: 0,
+                          duration: animationDuration,
+                          curve: animationCurve);
                     }
                   },
                   icon: Icon(widget.running ? Icons.stop : Icons.play_arrow))
@@ -607,407 +621,127 @@ class OrchestraTimelineState extends State<OrchestraTimeline> {
                     .jumpTo(scrollController.offset - zoomDelta * currentTime);
               });
             },
-            child: Stack(
+            child: Column(
               children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  controller: scrollController,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        left: MediaQuery.of(context).size.width / 2,
-                        right: MediaQuery.of(context).size.width / 2),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...widget.tracks
-                              .map((e) => Column(
-                                    children: [
-                                      Row(children: [
-                                        if (e.events.isEmpty) ...[
-                                          SizedBox(
-                                              height: widget.cardHeights[widget
-                                                      .selectedCardHeight] +
-                                                  2)
-                                        ],
-                                        ...e.events.map((message) {
-                                          var color = message.cardIndicator ==
-                                                  CardIndicator.COLOR
-                                              ? message.toColor()
-                                              : message.cardIndicator ==
-                                                      CardIndicator.PROGRESS
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .surface
-                                                  : null;
-                                          var gradient =
-                                              message.cardIndicator ==
-                                                      CardIndicator.GRADIENT
-                                                  ? message.toGradient()
-                                                  : null;
-                                          return Stack(
-                                            children: [
-                                              LongPressDraggable<DragData>(
-                                                  data: DragData(
-                                                      parentId: widget.tracks
-                                                          .indexOf(e),
-                                                      index: e.events
-                                                          .indexOf(message),
-                                                      dragType: DragType.NODE),
-                                                  onDragStarted: () =>
-                                                      setState(() {
-                                                        widget.isDragging =
-                                                            true;
-                                                      }),
-                                                  onDragEnd: (details) =>
-                                                      setState(() {
-                                                        widget.isDragging =
-                                                            false;
-                                                      }),
-                                                  dragAnchorStrategy: myOffset,
-                                                  childWhenDragging: getNode(
-                                                      animationDuration,
-                                                      animationCurve,
-                                                      max(
-                                                          message.delay
-                                                                      .inMilliseconds *
-                                                                  (widget
-                                                                      .zoomFactor) -
-                                                              2,
-                                                          0),
-                                                      .2,
-                                                      e,
-                                                      message,
-                                                      color,
-                                                      gradient),
-                                                  feedback: getNode(
-                                                      animationDuration,
-                                                      animationCurve,
-                                                      150,
-                                                      !e.active
-                                                          ? widget
-                                                              .opacityWhenInactive
-                                                          : message.isDragging
-                                                              ? widget
-                                                                  .opacityWhenDragging
-                                                              : 1,
-                                                      e,
-                                                      message,
-                                                      color,
-                                                      gradient,
-                                                      elevated: true),
-                                                  child: InkWell(
-                                                    child: getNode(
-                                                        animationDuration,
-                                                        animationCurve,
-                                                        max(
-                                                            message.delay
-                                                                        .inMilliseconds *
-                                                                    (widget
-                                                                        .zoomFactor) -
-                                                                2,
-                                                            0),
-                                                        !e.active
-                                                            ? widget
-                                                                .opacityWhenInactive
-                                                            : message.isDragging
-                                                                ? widget
-                                                                    .opacityWhenDragging
-                                                                : 1,
-                                                        e,
-                                                        message,
-                                                        color,
-                                                        gradient),
-                                                    onTap: () => {
-                                                      showDialog(
-                                                          context: context,
-                                                          builder: (_) {
-                                                            var currentDur = Duration(
-                                                                milliseconds:
-                                                                    message
-                                                                        .delay
-                                                                        .inMilliseconds);
-                                                            return AlertDialog(
-                                                              title: Text(
-                                                                  "Zeit bearbeiten"),
-                                                              scrollable: false,
-                                                              content:
-                                                                  Container(
-                                                                height: 200,
-                                                                child: TimePicker(
-                                                                    startDuration:
-                                                                        currentDur,
-                                                                    onChanged:
-                                                                        (dur) =>
-                                                                            {
-                                                                              currentDur = dur
-                                                                            }),
-                                                              ),
-                                                              actions: [
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () => {
-                                                                              Navigator.pop(context)
-                                                                            },
-                                                                    child: Text(
-                                                                      "Abbrechen",
-                                                                    )),
-                                                                TextButton(
-                                                                    onPressed:
-                                                                        () {
-                                                                      setState(
-                                                                          () {
-                                                                        message.delay =
-                                                                            currentDur;
-                                                                      });
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    },
-                                                                    child: Text(
-                                                                      "Anwenden",
-                                                                    ))
-                                                              ],
-                                                            );
-                                                          })
-                                                    },
-                                                  )),
-                                              if (true) ...[
-                                                Row(
-                                                  children: [
-                                                    IgnorePointer(
-                                                      child: SizedBox(
-                                                        height: widget
-                                                                    .cardHeights[
-                                                                widget
-                                                                    .selectedCardHeight] -
-                                                            2,
-                                                        width: max(
-                                                            message.delay
-                                                                        .inMilliseconds *
-                                                                    widget
-                                                                        .zoomFactor -
-                                                                2,
-                                                            0),
-                                                      ),
-                                                    ),
-                                                    DragTarget<DragData>(
-                                                      builder:
-                                                          (BuildContext context,
-                                                              List<DragData?>
-                                                                  accepted,
-                                                              List<dynamic>
-                                                                  rejected) {
-                                                        return AnimatedContainer(
-                                                          duration:
-                                                              animationDuration,
-                                                          curve: animationCurve,
-                                                          height: widget
-                                                                      .cardHeights[
-                                                                  widget
-                                                                      .selectedCardHeight] -
-                                                              2,
-                                                          child: Padding(
-                                                              padding:
-                                                                  const EdgeInsets
-                                                                          .only(
-                                                                      left: 2,
-                                                                      right: 2),
-                                                              child: DottedBorder(
-                                                                  padding: EdgeInsets.zero,
-                                                                  borderType: BorderType.RRect,
-                                                                  radius: Radius.circular(2),
-                                                                  color: widget.isDragging
-                                                                      ? accepted.isEmpty
-                                                                          ? Theme.of(context).colorScheme.primary
-                                                                          : Colors.green
-                                                                      : Colors.transparent,
-                                                                  child: ClipRRect(
-                                                                    borderRadius:
-                                                                        BorderRadius.all(
-                                                                            Radius.circular(2)),
-                                                                    child:
-                                                                        Container(
-                                                                      color: accepted
-                                                                              .isEmpty
-                                                                          ? Theme.of(context)
-                                                                              .colorScheme
-                                                                              .primary
-                                                                              .withOpacity(
-                                                                                  .25)
-                                                                          : Colors
-                                                                              .green
-                                                                              .withOpacity(.25),
-                                                                    ),
-                                                                  ))),
-                                                          width:
-                                                              widget.isDragging
-                                                                  ? 40
-                                                                  : 0,
-                                                        );
-                                                      },
-                                                      onAccept: (data) {
-                                                        var me = DragData(
-                                                            dragType:
-                                                                DragType.NODE,
-                                                            index: e.events
-                                                                .indexOf(
-                                                                    message),
-                                                            parentId: widget
-                                                                .tracks
-                                                                .indexOf(e));
-                                                        setState(() {
-                                                          var obj = widget
-                                                              .tracks[
-                                                                  data.parentId]
-                                                              .events
-                                                              .removeAt(
-                                                                  data.index);
-                                                          var newIndex = min(
-                                                              data.parentId ==
-                                                                      me
-                                                                          .parentId
-                                                                  ? me.index
-                                                                  : me.index +
-                                                                      1,
-                                                              widget
-                                                                  .tracks[me
-                                                                      .parentId]
-                                                                  .events
-                                                                  .length);
-                                                          widget
-                                                              .tracks[
-                                                                  me.parentId]
-                                                              .events
-                                                              .insert(newIndex,
-                                                                  obj);
-                                                        });
-                                                      },
-                                                      onWillAccept: (data) {
-                                                        var me = DragData(
-                                                            dragType:
-                                                                DragType.NODE,
-                                                            index: e.events
-                                                                .indexOf(
-                                                                    message),
-                                                            parentId: widget
-                                                                .tracks
-                                                                .indexOf(e));
-                                                        return !me.equals(data);
-                                                      },
-                                                    ),
-                                                  ],
-                                                )
-                                              ]
-                                            ],
-                                          );
-                                        }).toList(),
-                                        SizedBox(
-                                          height: widget.cardHeights[
-                                              widget.selectedCardHeight],
-                                          width: 32,
-                                          child: IconButton(
-                                              iconSize: 12,
-                                              onPressed: () {
-                                                openAddDialog(context, setState,
-                                                    widget.tracks.indexOf(e));
-                                              },
-                                              icon: Icon(Icons.add)),
-                                        )
-                                      ]),
-                                    ],
-                                  ))
-                              .toList(),
-                        ]),
-                  ),
-                ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width / 2,
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedContainer(
-                        duration: Duration(milliseconds: 250),
-                        curve: Curves.ease,
-                        width: menuActive ? widget.menuWidth : 0,
-                        child: Card(
-                          elevation: 32,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              bottomRight: Radius.circular(4.0),
-                              topRight: Radius.circular(4.0),
-                            ),
-                          ),
-                          margin: EdgeInsets.only(right: 8),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ...List.generate(widget.maxTracks,
-                                      (int index) => index).map((e) {
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 800),
-                                          curve: animationCurve,
-                                          height: menuItemHeight - 1,
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.max,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Checkbox(
-                                                  activeColor: Colors.green,
-                                                  value:
-                                                      widget.tracks[e].active,
-                                                  onChanged: (val) => {
-                                                        setState(() {
-                                                          widget.tracks[e]
-                                                              .active = val!;
-                                                        })
-                                                      }),
-                                              LampGroupChip(
-                                                  name: widget.lampGroups[e]),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                            height: 1, child: Divider())
-                                      ],
-                                    );
+                Container(
+                  height: 200,
+                  child: ScrollablePositionedList.builder(
+                      itemCount: widget.tracks[0].events.length,
+                      scrollDirection: Axis.horizontal,
+                      scrollOffsetController: offsetController,
+                      scrollOffsetListener: offsetListener,
+                      itemBuilder: (context, index) {
+                        var e = widget.tracks[0];
+                        var message = e.events[index];
+                        var color = message.cardIndicator == CardIndicator.COLOR
+                            ? message.toColor()
+                            : message.cardIndicator == CardIndicator.PROGRESS
+                                ? Theme.of(context).colorScheme.surface
+                                : null;
+                        var gradient =
+                            message.cardIndicator == CardIndicator.GRADIENT
+                                ? message.toGradient()
+                                : null;
+
+                        return Stack(children: [
+                          LongPressDraggable<DragData>(
+                              data: DragData(
+                                  parentId: widget.tracks.indexOf(e),
+                                  index: e.events.indexOf(message),
+                                  dragType: DragType.NODE),
+                              onDragStarted: () => setState(() {
+                                    widget.isDragging = true;
                                   }),
-                                ]),
-                          ),
-                        )),
-                  ],
-                ),
-                Padding(
-                  padding: EdgeInsets.only(
-                      left: MediaQuery.of(context).size.width / 2 - 1,
-                      right: MediaQuery.of(context).size.width / 2 - 1),
-                  child: AnimatedContainer(
-                      duration: animationDuration,
-                      curve: animationCurve,
-                      height: (menuItemHeight + 2) * widget.maxTracks - 16,
-                      child: Container(
-                          decoration: BoxDecoration(
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(.2),
-                            blurRadius: 4.0,
-                            spreadRadius: 0.0,
-                            offset: Offset(
-                                2.0, 2.0), // shadow direction: bottom right
-                          )
-                        ],
-                        border: Border(
-                            left: BorderSide(color: Colors.white, width: 2)),
-                      ))),
+                              onDragEnd: (details) => setState(() {
+                                    widget.isDragging = false;
+                                  }),
+                              dragAnchorStrategy: myOffset,
+                              childWhenDragging: getNode(
+                                  animationDuration,
+                                  animationCurve,
+                                  max(
+                                      message.delay.inMilliseconds *
+                                              (widget.zoomFactor) -
+                                          2,
+                                      0),
+                                  .2,
+                                  e,
+                                  message,
+                                  color,
+                                  gradient),
+                              feedback: getNode(
+                                  animationDuration,
+                                  animationCurve,
+                                  150,
+                                  !e.active
+                                      ? widget.opacityWhenInactive
+                                      : message.isDragging
+                                          ? widget.opacityWhenDragging
+                                          : 1,
+                                  e,
+                                  message,
+                                  color,
+                                  gradient,
+                                  elevated: true),
+                              child: InkWell(
+                                child: getNode(
+                                    animationDuration,
+                                    animationCurve,
+                                    max(
+                                        message.delay.inMilliseconds *
+                                                (widget.zoomFactor) -
+                                            2,
+                                        0),
+                                    !e.active
+                                        ? widget.opacityWhenInactive
+                                        : message.isDragging
+                                            ? widget.opacityWhenDragging
+                                            : 1,
+                                    e,
+                                    message,
+                                    color,
+                                    gradient),
+                                onTap: () => {
+                                  showDialog(
+                                      context: context,
+                                      builder: (_) {
+                                        var currentDur = Duration(
+                                            milliseconds:
+                                                message.delay.inMilliseconds);
+                                        return AlertDialog(
+                                          title: Text("Zeit bearbeiten"),
+                                          scrollable: false,
+                                          content: Container(
+                                            height: 200,
+                                            child: TimePicker(
+                                                startDuration: currentDur,
+                                                onChanged: (dur) =>
+                                                    {currentDur = dur}),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                                onPressed: () =>
+                                                    {Navigator.pop(context)},
+                                                child: Text(
+                                                  "Abbrechen",
+                                                )),
+                                            TextButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    message.delay = currentDur;
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  "Anwenden",
+                                                ))
+                                          ],
+                                        );
+                                      })
+                                },
+                              ))
+                        ]);
+                      }),
                 ),
               ],
             ),

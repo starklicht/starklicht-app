@@ -93,12 +93,21 @@ abstract class EventNode extends INode {
 class MessageNode extends EventNode {
   @override
   final Set<String> lamps;
+  String? cachedTitle;
+  Color? cachedColor;
+  Gradient? cachedGradient;
+  double? cachedPercentage;
   List<String> activeLamps = [];
   IBluetoothMessage message;
   ValueChanged<IBluetoothMessage>? onUpdateMessage;
 
   @override
   String getTitle() {
+    return cachedTitle ?? "Unbekannt";
+  }
+
+  String buildTitle() {
+    print("Getting title...");
     switch (message.messageType) {
       case MessageType.color:
         return "Farbe";
@@ -122,6 +131,9 @@ class MessageNode extends EventNode {
       case MessageType.clear:
         // TODO: Handle this case.
         break;
+      case MessageType.fade:
+        // TODO: Handle this case.
+        break;
     }
     return "Unbekannt";
   }
@@ -139,7 +151,16 @@ class MessageNode extends EventNode {
             update: update,
             onDelete: onDelete,
             waitForUserInput: waitForUserInput,
-            delay: delay);
+            delay: delay) {
+    cachedTitle = buildTitle();
+    if (cardIndicator == CardIndicator.COLOR) {
+      cachedColor = message.toColor();
+    } else if (cardIndicator == CardIndicator.GRADIENT) {
+      cachedGradient = message.toGradient();
+    } else if (cardIndicator == CardIndicator.PROGRESS) {
+      cachedPercentage = message.toPercentage();
+    }
+  }
 
   @override
   State<StatefulWidget> createState() => MessageNodeState();
@@ -160,20 +181,20 @@ class MessageNode extends EventNode {
 
   @override
   toColor() {
-    assert(cardIndicator == CardIndicator.COLOR);
-    return message.toColor();
+    assert(cardIndicator == CardIndicator.COLOR && cachedColor != null);
+    return cachedColor!;
   }
 
   @override
   toGradient() {
-    assert(cardIndicator == CardIndicator.GRADIENT);
-    return message.toGradient();
+    assert(cardIndicator == CardIndicator.GRADIENT && cachedGradient != null);
+    return cachedGradient!;
   }
 
   @override
   toPercentage() {
-    assert(cardIndicator == CardIndicator.PROGRESS);
-    return message.toPercentage();
+    assert(cardIndicator == CardIndicator.PROGRESS && cachedPercentage != null);
+    return cachedPercentage!;
   }
 
   @override

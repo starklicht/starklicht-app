@@ -23,20 +23,32 @@ class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   static const String _title = 'Flutter Code Sample';
-
+  static const accentColor = Color(0xFFF0A550);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', "US"), Locale('de', "DE")],
-      title: _title,
-      home: I18n(child: const MyStatefulWidget()),
-      darkTheme: ThemeData.dark(),
-      /* theme: ThemeData(
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en', "US"),
+          Locale('de', "DE")
+        ],
+        title: _title,
+        theme: ThemeData(
+            colorScheme:
+                ColorScheme.fromSwatch().copyWith(secondary: accentColor)),
+        home: I18n(child: const MyStatefulWidget()),
+        darkTheme: ThemeData.dark().copyWith(
+          colorScheme: ThemeData.dark().colorScheme.copyWith(
+                secondary: Color(0xFFF0A550),
+                onSecondary: Colors
+                    .white, // Light text color on the accent color background
+              ),
+        )
+        /* theme: ThemeData(
         toggleableActiveColor: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
@@ -56,14 +68,14 @@ class MyApp extends StatelessWidget {
 
         ),
       ), */
-    );
+        );
   }
 }
 
 /// This is the stateful widget that the main application instantiates.
 class MyStatefulWidget extends StatefulWidget {
   const MyStatefulWidget({Key? key}) : super(key: key);
-  final bool showOrchestra = false;
+  final bool showOrchestra = true;
 
   @override
   State<MyStatefulWidget> createState() => _MyStatefulWidgetState();
@@ -110,6 +122,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         if (!event.auto) {
           text = "%s wurde verbunden".i18n.fill([name]);
         } else {
+          // TODO: Add a handler, when device has connected
           text = "%s hat sich verbunden".i18n.fill([name]);
         }
       } else {

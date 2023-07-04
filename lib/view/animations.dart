@@ -10,6 +10,7 @@ import 'package:starklicht_flutter/model/enums.dart';
 import 'package:starklicht_flutter/model/redux.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
+
 import '../i18n/animations.dart';
 import 'colors.dart';
 

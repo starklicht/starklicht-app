@@ -7,8 +7,8 @@ import 'package:starklicht_flutter/messages/color_message.dart';
 import 'package:starklicht_flutter/messages/fade_message.dart';
 import 'package:starklicht_flutter/persistence/persistence.dart';
 import 'package:starklicht_flutter/view/time_picker.dart';
+
 import '../i18n/colors.dart';
-import 'dart:math' as math;
 
 class ColorSaveController {
   Function? save;
@@ -17,6 +17,7 @@ class ColorSaveController {
 
 class ColorsWidget extends StatefulWidget {
   Color? startColor;
+  bool showColorPalette = false;
   ValueChanged<Color>? onChanged;
   bool emitEventsSlowly;
   ValueChanged<bool>? onColorExistsChange;
@@ -175,7 +176,6 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         onColorChanged: (color) =>
             {changeColor(color, emit: widget.emitEventsSlowly == false)},
         onColorChangeEnd: (color) {
-          print("Hi");
           updateIsColorSaved();
           if (widget.emitEventsSlowly) {
             widget.onChanged?.call(pickerColor);
@@ -205,16 +205,46 @@ class _ColorsWidgetState extends State<ColorsWidget> {
         tonalSubheading: const Text("Helligkeit"),
         showColorCode: true,
         showColorName: true,
-        pickersEnabled: const <ColorPickerType, bool>{
+        pickersEnabled: <ColorPickerType, bool>{
           ColorPickerType.wheel: true,
           ColorPickerType.primary: false,
           ColorPickerType.accent: false,
-          ColorPickerType.both: true,
-          ColorPickerType.custom: true,
+          ColorPickerType.both: widget.showColorPalette,
+          ColorPickerType.custom: widget.showColorPalette,
         },
         customColorSwatchesAndNames: colorsNameMap,
       ),
-      TextButton.icon(
+      Text(
+        'Slider',
+        style: Theme.of(context).textTheme.headline5,
+      ),
+      Column(children: [
+        Slider(
+          value: pickerColor.red.toDouble() / 255,
+          onChanged: (val) => {
+            changeColor(Color.fromARGB(pickerColor.alpha, (val * 255).toInt(),
+                pickerColor.green, pickerColor.blue))
+          },
+          activeColor: Colors.redAccent,
+        ),
+        Slider(
+          value: pickerColor.green.toDouble() / 255,
+          onChanged: (val) => {
+            changeColor(Color.fromARGB(pickerColor.alpha, pickerColor.red,
+                (val * 255).toInt(), pickerColor.blue))
+          },
+          activeColor: Colors.greenAccent,
+        ),
+        Slider(
+          value: pickerColor.blue.toDouble() / 255,
+          onChanged: (val) => {
+            changeColor(Color.fromARGB(pickerColor.alpha, pickerColor.red,
+                pickerColor.green, (val * 255).toInt()))
+          },
+          activeColor: Colors.blueAccent,
+        )
+      ]),
+      /* TextButton.icon(
         label: const Text("Zufallsfarbe"),
         icon: const Icon(Icons.shuffle),
         onPressed: () {
@@ -222,7 +252,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
               .withOpacity(1.0));
           updateIsColorSaved();
         },
-      )
+      ) */
     ]);
   }
 }
@@ -232,6 +262,7 @@ class ColorScaffoldWidget extends StatefulWidget {
   Function? delete;
   bool emitSlowly = true;
   Duration emitDuration = const Duration(milliseconds: 400);
+  bool canSaveColors = false;
 
   String formatTime() {
     var minutes = emitDuration.inMinutes.remainder(60);
@@ -287,6 +318,80 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget>
           padding: const EdgeInsets.only(bottom: 72),
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  "Sendeoptionen",
+                  style: Theme.of(context).textTheme.headline5,
+                ),
+              ),
+              CheckboxListTile(
+                  value: widget.emitSlowly,
+                  onChanged: (v) => {
+                        setState(() {
+                          widget.emitSlowly = v ?? false;
+                        })
+                      },
+                  title: const Text("Glatte Übergänge")),
+              if (widget.emitSlowly) ...[
+                ListTile(
+                  title: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        timeIsExtended = !timeIsExtended;
+                      });
+                      if (timeIsExtended) {
+                        _controller.forward();
+                      } else {
+                        _controller.reverse();
+                      }
+                    },
+                    child: RichText(
+                        text: TextSpan(children: [
+                      TextSpan(
+                          text: "Dauer: ",
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      WidgetSpan(
+                          child: Icon(Icons.access_time,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .inverseSurface)),
+                      TextSpan(
+                          text: " ${widget.formatTime()}",
+                          style: Theme.of(context).textTheme.bodyMedium)
+                    ])),
+                  ),
+                  trailing: IconButton(
+                    icon: RotationTransition(
+                      turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
+                      child: const Icon(Icons.expand_more),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        timeIsExtended = !timeIsExtended;
+                      });
+                      if (timeIsExtended) {
+                        _controller.forward();
+                      } else {
+                        _controller.reverse();
+                      }
+                    },
+                  ),
+                )
+              ],
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: timeIsExtended ? 200 : 0.00000001,
+                child: TimePicker(
+                  startDuration: widget.emitDuration,
+                  onChanged: (t) => {
+                    setState(() {
+                      widget.emitDuration = t;
+                    })
+                  },
+                ),
+              ),
               ColorsWidget(
                 emitEventsSlowly: widget.emitSlowly,
                 controller: saveController,
@@ -307,88 +412,24 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget>
                   _colorExists = exists;
                 }),
               ),
-              Text(
-                "Sendeoptionen",
-                style: Theme.of(context).textTheme.headline5,
-              ),
-              CheckboxListTile(
-                  value: widget.emitSlowly,
-                  onChanged: (v) => {
-                        setState(() {
-                          widget.emitSlowly = v ?? false;
-                        })
-                      },
-                  title: const Text("Glatte Übergänge")),
-              ListTile(
-                title: TextButton(
-                  onPressed: () {
-                    setState(() {
-                      timeIsExtended = !timeIsExtended;
-                    });
-                    if (timeIsExtended) {
-                      _controller.forward();
-                    } else {
-                      _controller.reverse();
-                    }
-                  },
-                  child: RichText(
-                      text: TextSpan(children: [
-                    TextSpan(
-                        text: "Dauer: ",
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    WidgetSpan(
-                        child: Icon(Icons.access_time,
-                            size: 16,
-                            color:
-                                Theme.of(context).colorScheme.inverseSurface)),
-                    TextSpan(
-                        text: " ${widget.formatTime()}",
-                        style: Theme.of(context).textTheme.bodyMedium)
-                  ])),
-                ),
-                trailing: IconButton(
-                  icon: RotationTransition(
-                    turns: Tween(begin: 0.0, end: 0.5).animate(_controller),
-                    child: const Icon(Icons.expand_more),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      timeIsExtended = !timeIsExtended;
-                    });
-                    if (timeIsExtended) {
-                      _controller.forward();
-                    } else {
-                      _controller.reverse();
-                    }
-                  },
-                ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: timeIsExtended ? 200 : 0.00000001,
-                child: TimePicker(
-                  startDuration: widget.emitDuration,
-                  onChanged: (t) => {
-                    setState(() {
-                      widget.emitDuration = t;
-                    })
-                  },
-                ),
-              )
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_colorExists) {
-            saveController.delete?.call();
-          } else {
-            saveController.save?.call();
-          }
-        },
-        child: _colorExists ? const Icon(Icons.delete) : const Icon(Icons.save),
-      ),
+      floatingActionButton: widget.canSaveColors
+          ? FloatingActionButton(
+              onPressed: () {
+                if (_colorExists) {
+                  saveController.delete?.call();
+                } else {
+                  saveController.save?.call();
+                }
+              },
+              child: _colorExists
+                  ? const Icon(Icons.delete)
+                  : const Icon(Icons.save),
+            )
+          : null,
     );
   }
 }
