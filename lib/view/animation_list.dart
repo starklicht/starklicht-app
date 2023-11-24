@@ -112,7 +112,7 @@ class _AnimationsWidgetState extends State<AnimationsWidget> {
                       Lottie.asset('assets/server.json', width: 500),
                       Text(
                         "Keine gespeicherten Animationen\n".i18n,
-                        style: const TextStyle(fontSize: 20),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Text(
                         'Im Bereich "Animation" kannst du Animationen erstellen und speichern'

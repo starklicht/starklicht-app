@@ -1,12 +1,14 @@
 import 'dart:async';
+
+import 'package:collection/src/iterable_extensions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
 import 'package:lottie/lottie.dart';
+import 'package:starklicht_flutter/controller/starklicht_bluetooth_controller.dart';
+
 import "../i18n/connections.dart";
 import '../model/lamp_groups_enum.dart';
-import 'package:collection/src/iterable_extensions.dart';
 
 class _ConnectionsWidgetState extends State<ConnectionsWidget> {
   BluetoothController<SBluetoothDevice> controller =
@@ -112,9 +114,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                             Text(
                               "${getPlaceholderTitleAndSubtitle()[0]}\n",
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 20,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             Text(
                               "${getPlaceholderTitleAndSubtitle()[1]}\n",
@@ -234,8 +234,7 @@ class _ConnectionsWidgetState extends State<ConnectionsWidget> {
                                                         const OutlineInputBorder()),
                                                 keyboardType:
                                                     TextInputType.number,
-                                                inputFormatters: <
-                                                    TextInputFormatter>[
+                                                inputFormatters: <TextInputFormatter>[
                                                   FilteringTextInputFormatter
                                                       .digitsOnly
                                                 ],

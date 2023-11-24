@@ -1239,16 +1239,21 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
             Text(
               "Zeitverlauf\n".i18n,
               textAlign: TextAlign.start,
+              style: Theme.of(context).textTheme.titleSmall,
             ),
             GradientEditorWidget(gradient: gradient!, callback: callback),
             const Divider(height: 32),
             Text(
               "Animationseinstellungen".i18n,
               textAlign: TextAlign.start,
+              style: Theme.of(context).textTheme.titleSmall,
             ),
             AnimationSettings(settings: settings!, callback: callback),
             const Divider(height: 32),
-            Text("Animationsvorschau".i18n),
+            Text(
+              "Animationsvorschau".i18n,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
             const SizedBox(height: 12),
             AnimationPreviewWidget(
                 onAnimationsValidChanged: widget.onAnimationsValidChanged,
@@ -1262,7 +1267,10 @@ class _AnimationsEditorWidgetState extends State<AnimationsEditorWidget> {
                 title: widget.animation?.title),
             if (widget.showSendingOptions) ...[
               const Divider(height: 32),
-              Text("Einstellungen".i18n),
+              Text(
+                "Einstellungen".i18n,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
               const SizedBox(height: 12),
               AnimationTaskbarWidget(
                   settings: settings!, colors: gradient!, notify: notifyChanges)

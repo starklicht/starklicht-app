@@ -18,6 +18,14 @@ import 'view/animations.dart';
 
 void main() => runApp(const MyApp());
 
+class StarklichtColors {
+  static const Color primaryColor = Color(0xFF1C2029);
+  static const Color secondaryColor = Color(0xFF373F51);
+  static const Color accentColor = Color(0xFFF0A550);
+  static const Color highlightColor = Color(0xFF83A6B7);
+  static const Color darkColor = Color(0xFF4E8098);
+}
+
 /// This is the main application widget.
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -42,6 +50,17 @@ class MyApp extends StatelessWidget {
                 ColorScheme.fromSwatch().copyWith(secondary: accentColor)),
         home: I18n(child: const MyStatefulWidget()),
         darkTheme: ThemeData.dark().copyWith(
+          textTheme: ThemeData.dark().textTheme.copyWith(
+                titleSmall: TextStyle(
+                    fontFamily: 'Montserrat',
+                    color: Colors.white,
+                    fontWeight: FontWeight.normal),
+                titleLarge: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white),
+              ),
           colorScheme: ThemeData.dark().colorScheme.copyWith(
                 secondary: Color(0xFFF0A550),
                 onSecondary: Colors
@@ -163,8 +182,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       appBar: AppBar(
         title: Text('STARKLICHT'.i18n,
             style: const TextStyle(
-              fontFamily: 'MontserratBlack',
-            )),
+                fontFamily: 'Montserrat', fontWeight: FontWeight.w900)),
         actions: <Widget>[
           if (options.isNotEmpty) ...[
             IconButton(

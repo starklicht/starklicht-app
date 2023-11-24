@@ -169,8 +169,8 @@ class _ColorsWidgetState extends State<ColorsWidget> {
     return Column(children: [
       ColorPicker(
         heading: Text(
-          'Farbauswahl',
-          style: Theme.of(context).textTheme.headline5,
+          'Farbauswahl\n',
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         color: pickerColor,
         onColorChanged: (color) =>
@@ -216,7 +216,7 @@ class _ColorsWidgetState extends State<ColorsWidget> {
       ),
       Text(
         'Slider',
-        style: Theme.of(context).textTheme.headline5,
+        style: Theme.of(context).textTheme.titleLarge,
       ),
       Column(children: [
         Slider(
@@ -322,7 +322,7 @@ class _ColorScaffoldWidgetState extends State<ColorScaffoldWidget>
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
                   "Sendeoptionen",
-                  style: Theme.of(context).textTheme.headline5,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
               CheckboxListTile(
