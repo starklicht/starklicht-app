@@ -66,7 +66,8 @@ https://starklicht.net/
 
 ## 📄 License
 
-Licensed under the GNU GPL v3. See [LICENSE](LICENSE) for details.
+This project is licensed under the GNU GPL v3. See the main [LICENSE](LICENSE) file for details.
+For a comprehensive list of all licenses, including those of our open-source dependencies, please refer to [LICENSES.md](LICENSES.md).
 
 ---
 
