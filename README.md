@@ -3,6 +3,10 @@
 **Starklicht Controller** is a smart app for controlling your Starklicht lamp — a professional lighting device for filmmakers and creators. Easily connect, animate, and orchestrate your lamp for creative lighting scenes! 🎬💡
 
 This is the client for the following microcontroller: [github.com/starklicht/starklicht-stm32](https://github.com/starklicht/starklicht-stm32)
+---
+## 📖 Documentation
+
+A detailed Instruction is stored in the [Wiki](https://github.com/starklicht/starklicht-app/wiki)
 
 ---
 
