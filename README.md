@@ -27,6 +27,11 @@ A detailed Instruction is stored in the [Wiki](https://github.com/starklicht/sta
 
 https://starklicht.net/
 
+### Gifs
+![connection-compressed](https://github.com/user-attachments/assets/4ff8fb44-5cb4-4c2e-b3b8-bc73c7670ff9)
+![color-compressed](https://github.com/user-attachments/assets/c6020ec8-7c33-4ca1-80af-16294c0dfe61)
+![animations-compressed](https://github.com/user-attachments/assets/a72aebf7-2b64-4627-8401-403d53de7583)
+
 ---
 
 ## 🛠️ Getting Started
