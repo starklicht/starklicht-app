@@ -6,7 +6,7 @@ This is the client for the following microcontroller: [github.com/starklicht/sta
 ---
 ## 📖 Documentation
 
-A detailed Instruction is stored in the [Wiki](https://github.com/starklicht/starklicht-app/wiki)
+A detailed Instruction is stored on our website: https://starklicht.net/docs/intro/
 
 ---
 
